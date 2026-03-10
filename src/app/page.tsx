@@ -101,9 +101,9 @@ export default function KioskPage() {
           <article className={styles.stepContent}>
             {/* Step 0: 시작 버튼 영역 */}
             {step === 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
+              <div className={styles.stepLayout}>
                 <header className={styles.stepHeader}>
-                  <h2 style={{ fontSize: '2.8rem', marginBottom: '40px', whiteSpace: 'normal' }}>
+                  <h2 className={styles.multiline}>
                     주차 정산을 <br /> 시작하시겠습니까?
                   </h2>
                 </header>
@@ -115,7 +115,7 @@ export default function KioskPage() {
 
             {/* Step 1: 이용권 선택 */}
             {step === 1 && (
-              <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
+              <div className={styles.stepLayout}>
                 <header className={styles.stepHeader}>
                   <h2>이용하신 입장권 종류를 선택해 주세요</h2>
                 </header>
@@ -134,7 +134,7 @@ export default function KioskPage() {
 
             {/* Step 2: 키패드 (차량 번호 입력) */}
             {step === 2 && (
-              <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
+              <div className={styles.stepLayout}>
                 <header className={styles.stepHeader}>
                   <h2>차량 번호 4자리를 입력해주세요</h2>
                 </header>
@@ -142,13 +142,12 @@ export default function KioskPage() {
                 <div className={styles.plateInputContainer}>
                   <div className={styles.plateTop}>
                     <div className={styles.plateInputBox}>
-                      {plateNumber || <span style={{ color: "#cbd5e1" }}>0 0 0 0</span>}
+                      {plateNumber || <span className={styles.placeholderText}>0 0 0 0</span>}
                     </div>
                     <button
-                      className={styles.primaryBtn}
+                      className={`${styles.primaryBtn} ${styles.searchBtn}`}
                       onClick={handleSearchCars}
                       disabled={plateNumber.length < 4}
-                      style={{ height: '100%', minWidth: '150px', margin: 0, padding: '0 15px', fontSize: '1.6rem', whiteSpace: 'nowrap' }}
                     >
                       차량 조회
                     </button>
@@ -178,8 +177,8 @@ export default function KioskPage() {
 
             {/* Step 3: 차량 선택 및 확인 페이지 */}
             {step === 3 && (
-              <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'flex-start' }}>
-                <header className={styles.stepHeader} style={{ marginBottom: '20px' }}>
+              <div className={styles.stepLayoutStart}>
+                <header className={`${styles.stepHeader} ${styles.smallMargin}`}>
                   <h2>내 차량을 눌러 선택해주세요</h2>
                 </header>
 
@@ -197,13 +196,7 @@ export default function KioskPage() {
                         <div className={styles.carListPlate}>
                           {car.platePrefix} {car.plateNumber}
                         </div>
-                        <div style={{
-                          color: '#009fe3',
-                          fontSize: '1.2rem',
-                          fontWeight: 800,
-                          marginTop: '5px',
-                          visibility: selectedCar === car ? 'visible' : 'hidden'
-                        }}>
+                        <div className={`${styles.selectedStatus} ${selectedCar === car ? styles.visible : ''}`}>
                           선택됨
                         </div>
                       </div>
@@ -225,19 +218,17 @@ export default function KioskPage() {
                   </div>
                 )}
 
-                <div style={{ display: 'flex', gap: '20px', marginTop: 'auto', paddingTop: '10px', paddingBottom: '10px' }}>
+                <div className={styles.actionRow}>
                   <button
-                    className={styles.secondaryBtn}
+                    className={`${styles.secondaryBtn} ${styles.actionBtnPrev}`}
                     onClick={() => setStep(2)}
-                    style={{ flex: 1, margin: 0, border: '3px solid #e2e8f0', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '70px', borderRadius: '20px' }}
                   >
                     이전으로
                   </button>
                   <button
-                    className={styles.primaryBtn}
+                    className={`${styles.primaryBtn} ${styles.actionBtnNext}`}
                     onClick={() => setStep(4)}
                     disabled={!selectedCar}
-                    style={{ flex: 2, marginTop: 0, margin: 0, height: '70px', fontSize: '1.4rem', whiteSpace: 'nowrap', padding: '0 10px' }}
                   >
                     네, 정산합니다 ({ticket === "2hours" ? "2시간권" : "종일 무제한권"})
                   </button>
@@ -248,11 +239,11 @@ export default function KioskPage() {
             {/* Step 4: 완료 페이지 */}
             {step === 4 && (
               <div className={styles.completeText}>
-                <CheckCircle2 size={100} color="#86c043" style={{ marginBottom: "20px" }} />
+                <CheckCircle2 size={100} color="#86c043" className={styles.checkIcon} />
                 <h2>정산 완료!</h2>
                 <p>이용해주셔서 감사합니다.<br />안녕히 가세요! 🦖</p>
 
-                <button className={styles.secondaryBtn} onClick={resetKiosk} style={{ marginTop: "30px", fontSize: "1.5rem" }}>
+                <button className={`${styles.secondaryBtn} ${styles.returnBtn}`} onClick={resetKiosk}>
                   처음 화면으로 돌아가기
                 </button>
               </div>

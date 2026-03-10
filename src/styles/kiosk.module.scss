@@ -214,6 +214,16 @@
     font-weight: 900;
     margin: 0;
     white-space: nowrap; // 제목 줄바꿈 방지
+
+    &.multiline {
+      font-size: 2.8rem;
+      margin-bottom: 40px;
+      white-space: normal;
+    }
+  }
+
+  &.smallMargin {
+    margin-bottom: 20px;
   }
 }
 
@@ -550,4 +560,82 @@
   100% {
     transform: translateY(0px) rotate(-1deg);
   }
+}
+
+// 유틸리티 클래스 (인라인 스타일 대체)
+.stepLayout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: center;
+}
+
+.stepLayoutStart {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: flex-start;
+}
+
+.placeholderText {
+  color: #cbd5e1;
+}
+
+.searchBtn {
+  height: 100%;
+  min-width: 150px;
+  margin: 0;
+  padding: 0 15px;
+  font-size: 1.6rem;
+  white-space: nowrap;
+}
+
+.selectedStatus {
+  color: $primary-blue;
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin-top: 5px;
+  visibility: hidden;
+
+  &.visible {
+    visibility: visible;
+  }
+}
+
+.actionRow {
+  display: flex;
+  gap: 20px;
+  margin-top: auto;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.actionBtnPrev {
+  flex: 1;
+  margin: 0;
+  border: 3px solid #e2e8f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 70px;
+  border-radius: 20px;
+}
+
+.actionBtnNext {
+  flex: 2;
+  margin-top: 0;
+  margin: 0;
+  height: 70px;
+  font-size: 1.4rem;
+  white-space: nowrap;
+  padding: 0 10px;
+}
+
+.checkIcon {
+  margin-bottom: 20px;
+}
+
+.returnBtn {
+  margin-top: 30px;
+  font-size: 1.5rem;
 }
