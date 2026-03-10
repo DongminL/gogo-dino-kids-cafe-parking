@@ -4,6 +4,7 @@ import "./globals.scss";
 export const metadata: Metadata = {
   title: "고고 다이노 키즈카페 주차 정산",
   description: "고고 다이노 키즈카페 주차 정산 시스템",
+  manifest: "/manifest.json"
 };
 
 export default function RootLayout(
