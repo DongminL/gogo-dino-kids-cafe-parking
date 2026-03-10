@@ -1,0 +1,16 @@
+{
+  "name": "고고 다이노 주차 정산",
+  "short_name": "고고 다이노 주차",
+  "description": "고고 다이노 키즈카페 주차 정산 시스템 (PWA)",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fffbef",
+  "theme_color": "#0ea5e9",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "192x192",
+      "type": "image/x-icon"
+    }
+  ]
+}

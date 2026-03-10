@@ -1,0 +1,641 @@
+@use './variables' as *;
+
+// 전체 컨테이너
+.kioskContainer {
+  width: 100vw;
+  height: 100vh;
+  background-color: #e0f2fe;
+  @include flex-center;
+  font-family: inherit;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+
+  // 배경 장식 효과 (커다랗고 부드러운 원형 포인트)
+  &::before {
+    content: '';
+    position: absolute;
+    top: -20vh;
+    left: -10vw;
+    width: 60vh;
+    height: 60vh;
+    border-radius: 50%;
+    background-color: rgba($primary-yellow, 0.4);
+    z-index: 0;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -30vh;
+    right: -10vw;
+    width: 80vh;
+    height: 80vh;
+    border-radius: 50%;
+    background-color: rgba($primary-green, 0.2);
+    z-index: 0;
+  }
+}
+
+// 키오스크 메인 기계 외관 (단단한 장난감 같은 모습)
+.kioskCard {
+  background: white;
+  width: 95%;
+  max-width: 1200px;
+  height: 90%;
+  max-height: 800px;
+  border-radius: $border-radius-lg;
+  box-shadow: 0 20px 0 rgba(22, 38, 76, 0.4);
+  display: flex;
+  flex-direction: row; // 가로 모드를 위한 좌우 분할
+  z-index: 1;
+  position: relative;
+  border: 6px solid $primary-navy;
+  overflow: hidden;
+}
+
+// 좌측 브랜드 패널: 산뜻한 파스텔 블루에 구름/장난감 상자 느낌
+.leftPanel {
+  flex: 1;
+  background-color: #bae6fd;
+  background-image: radial-gradient(#7dd3fc 20%, transparent 20%);
+  background-size: 40px 40px;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  color: $primary-navy;
+  text-align: center;
+  border-right: 6px solid $primary-navy;
+
+  .logoSection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: white;
+    padding: 30px;
+    border-radius: 30px;
+    border: 4px solid $primary-navy;
+    box-shadow: 0 8px 0 $primary-navy;
+    width: 100%;
+    margin-top: 20px;
+    transform: rotate(-1deg);
+  }
+
+  .logo {
+    width: 90%;
+    max-width: 330px;
+    height: auto;
+    margin-bottom: 20px;
+    animation: floating 3s ease-in-out infinite; // 부드럽게 둥둥 떠다니는 애니메이션
+  }
+
+  h1 {
+    font-size: 2.2rem;
+    color: $primary-navy;
+    margin: 0;
+    font-weight: 900;
+  }
+
+  p {
+    color: $primary-navy;
+    background-color: #ffecd1;
+    border: 3px solid $primary-navy;
+    border-radius: 20px;
+    padding: 10px 20px;
+    margin-top: 15px;
+    font-size: 1.3rem;
+    font-weight: 800;
+    box-shadow: 0 4px 0 $primary-navy;
+  }
+}
+
+// 좌측 하단 처음으로 버튼
+.homeBtn {
+  background: white;
+  border: 4px solid $primary-navy;
+  color: $primary-navy;
+  border-radius: $border-radius-md;
+  box-shadow: 0 6px 0 $primary-navy;
+  padding: 15px 30px;
+  font-size: 1.4rem;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.1s;
+  width: 100%;
+  justify-content: center;
+
+  &:hover {
+    background: #f1f5f9;
+  }
+
+  &:active {
+    transform: translateY(6px);
+    box-shadow: 0 0 0 $primary-navy;
+  }
+}
+
+// 우측 상호작용 패널
+.rightPanel {
+  flex: 1.5;
+  padding: 30px 40px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background-color: white;
+}
+
+.rightHeader {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  height: 60px;
+  margin-bottom: 15px;
+}
+
+.backBtn {
+  display: flex;
+  align-items: center;
+  background: white;
+  border: 4px solid $primary-navy;
+  border-radius: 50px;
+  padding: 10px 20px;
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: $primary-navy;
+  box-shadow: 0 4px 0 $primary-navy;
+  cursor: pointer;
+  transition: all 0.1s;
+
+  &:hover {
+    background: #fefce8;
+  }
+
+  &:active {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 $primary-navy;
+  }
+
+  svg {
+    margin-right: 8px;
+  }
+}
+
+.stepContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.stepHeader {
+  text-align: center;
+  margin-bottom: 30px;
+
+  h2 {
+    color: $primary-navy;
+    font-size: 2.2rem;
+    font-weight: 900;
+    margin: 0;
+    white-space: nowrap; // 제목 줄바꿈 방지
+
+    &.multiline {
+      font-size: 2.8rem;
+      margin-bottom: 40px;
+      white-space: normal;
+    }
+  }
+
+  &.smallMargin {
+    margin-bottom: 20px;
+  }
+}
+
+// Step 0: 시작하기
+.startBtn {
+  @include kiosk-button($primary-yellow, $primary-navy);
+  width: 100%;
+  height: 120px;
+  font-size: 2.5rem;
+  letter-spacing: 2px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+}
+
+// Step 1: 요금제 선택
+.ticketGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  height: 300px;
+}
+
+.ticketBtn {
+  background: white;
+  border: 4px solid $primary-navy;
+  border-radius: $border-radius-md;
+  box-shadow: 0 8px 0 $primary-navy;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  cursor: pointer;
+  transition: all 0.1s;
+
+  &:hover {
+    background-color: #f0f9ff;
+    transform: translateY(-4px);
+    box-shadow: 0 12px 0 $primary-navy;
+  }
+
+  &:active {
+    transform: translateY(8px);
+    box-shadow: 0 0 0 $primary-navy;
+  }
+
+  .ticketTitle {
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: $primary-navy;
+  }
+
+  .ticketIcon {
+    font-size: 4rem;
+  }
+}
+
+// Step 2: 키패드 (넘버 입력)
+.plateInputContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+  height: 100%;
+  padding-bottom: 20px;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.plateTop {
+  display: grid;
+  grid-template-columns: 1fr 150px; // 입력창과 버튼 넓이
+  gap: 15px;
+  width: 100%;
+  height: 80px;
+}
+
+.plateBottom {
+  width: 100%;
+  flex: 1;
+}
+
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 12px;
+  height: 100%;
+}
+
+.keypadBtn {
+  background: white;
+  border: 4px solid $primary-navy;
+  border-radius: $border-radius-sm;
+  box-shadow: 0 6px 0 $primary-navy;
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: $primary-navy;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.1s;
+
+  &:active {
+    transform: translateY(6px);
+    box-shadow: 0 0 0 $primary-navy;
+    background: #e2e8f0;
+  }
+
+  &.actionBtn {
+    font-size: 1.3rem;
+    white-space: nowrap;
+  }
+
+  &.clearBtn {
+    background: #ffcdd2;
+    color: $primary-red;
+  }
+
+  &.backspaceBtn {
+    background: #ffecb3;
+    color: #e65100;
+  }
+}
+
+.plateInputBox {
+  width: 100%;
+  height: 100%;
+  background: white;
+  border: 4px solid $primary-navy;
+  border-radius: $border-radius-md;
+  box-shadow: inset 0 6px 0 rgba(0, 0, 0, 0.1);
+  font-size: 3rem;
+  font-weight: 900;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  letter-spacing: 5px;
+  color: $primary-navy;
+  white-space: nowrap;
+}
+
+// Step 3: 차량 선택 단계
+.carListGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  overflow-y: auto;
+  padding: 5px;
+  margin-bottom: 20px;
+
+  // 스크롤바 숨어있게 처리 튀어오름 방지 
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  -ms-overflow-style: none; // IE and Edge 
+  scrollbar-width: none; // Firefox 
+}
+
+.carListItem {
+  background: white;
+  border: 4px solid #cbd5e1;
+  border-radius: $border-radius-md;
+  box-shadow: 0 6px 0 #cbd5e1;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  cursor: pointer;
+  transition: all 0.1s;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 0 #cbd5e1;
+  }
+
+  &:active {
+    transform: translateY(6px);
+    box-shadow: 0 0 0 #cbd5e1;
+  }
+
+  &.selected {
+    border-color: $primary-blue;
+    box-shadow: 0 6px 0 $primary-blue;
+    background-color: #e0f2fe;
+
+    .carListPlate {
+      color: $primary-blue;
+    }
+
+    .carListImage {
+      border-color: $primary-blue;
+    }
+  }
+}
+
+.carListImage {
+  width: 90px;
+  height: 90px;
+  background-color: white;
+  border: 3px solid #cbd5e1;
+  border-radius: $border-radius-sm;
+  @include flex-center;
+}
+
+.carListInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.carListPlate {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: $primary-navy;
+}
+
+// 차량 사진 렌더링 (미리보기)
+.carPreviewBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 4px dashed $primary-navy; // 만화 스티커 붙일 곳 같은 느낌
+  border-radius: $border-radius-md;
+  padding: 10px;
+  margin-top: 10px;
+  flex: 1;
+  min-height: 140px;
+  max-height: 200px;
+}
+
+.carPreviewImg {
+  width: 100%;
+  height: 100%;
+  background: #f1f5f9;
+  border-radius: $border-radius-sm;
+  border: 4px solid $primary-navy;
+  @include flex-center;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
+.carPreviewPlaceholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  min-height: 140px;
+  max-height: 200px;
+  background: #fefce8;
+  border-radius: $border-radius-md;
+  color: $primary-navy;
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin-top: 10px;
+  border: 4px dashed #fcd34d;
+}
+
+
+// Step 4: 완료 단계
+.completeText {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  h2 {
+    font-size: 3.5rem;
+    color: $primary-navy; // 눈부신 초록색 대신 눈이 편안한 네이비색으로 변경
+    margin-bottom: 20px;
+    font-weight: 900;
+  }
+
+  p {
+    font-size: 1.8rem;
+    color: $primary-navy;
+    line-height: 1.6;
+    font-weight: 800;
+  }
+}
+
+// 공통 버튼 요소
+.primaryBtn {
+  @include kiosk-button($primary-blue, white);
+  width: 100%;
+  padding: 20px 40px;
+  font-size: 1.5rem;
+
+  &:disabled {
+    opacity: 0.6;
+    background: #cbd5e1 !important;
+    border-color: #94a3b8 !important;
+    box-shadow: 0 8px 0 #94a3b8 !important;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+.secondaryBtn {
+  @include kiosk-button(white, $primary-navy);
+  padding: 15px;
+  font-size: 1.3rem;
+  width: 100%;
+
+  &:hover {
+    background: #f1f5f9;
+  }
+}
+
+@keyframes floating {
+  0% {
+    transform: translateY(0px) rotate(-1deg);
+  }
+
+  50% {
+    transform: translateY(-8px) rotate(-1deg);
+  }
+
+  100% {
+    transform: translateY(0px) rotate(-1deg);
+  }
+}
+
+// 유틸리티 클래스 (인라인 스타일 대체)
+.stepLayout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: center;
+}
+
+.stepLayoutStart {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: flex-start;
+}
+
+.placeholderText {
+  color: #cbd5e1;
+}
+
+.searchBtn {
+  height: 100%;
+  min-width: 150px;
+  margin: 0;
+  padding: 0 15px;
+  font-size: 1.6rem;
+  white-space: nowrap;
+}
+
+.selectedStatus {
+  color: $primary-blue;
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin-top: 5px;
+  visibility: hidden;
+
+  &.visible {
+    visibility: visible;
+  }
+}
+
+.actionRow {
+  display: flex;
+  gap: 20px;
+  margin-top: auto;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.actionBtnPrev {
+  flex: 1;
+  margin: 0;
+  border: 3px solid #e2e8f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 70px;
+  border-radius: 20px;
+}
+
+.actionBtnNext {
+  flex: 2;
+  margin-top: 0;
+  margin: 0;
+  height: 70px;
+  font-size: 1.4rem;
+  white-space: nowrap;
+  padding: 0 10px;
+}
+
+.checkIcon {
+  margin-bottom: 20px;
+}
+
+.returnBtn {
+  margin-top: 30px;
+  font-size: 1.5rem;
+}
