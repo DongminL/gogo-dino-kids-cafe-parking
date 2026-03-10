@@ -22,14 +22,12 @@ export default function KioskPage() {
   // 정산 완료 시 5초 후 처음으로 돌아가기
   useEffect(() => {
     if (step === 4) {
-      const timer = setTimeout(() => {
-        resetKiosk();
-      }, 5000);
+      const timer = setTimeout(() => resetKiosk(), 5000);
       return () => clearTimeout(timer);
     }
   }, [step]);
 
-  const resetKiosk = () => {
+  const resetKiosk = (): void => {
     setStep(0);
     setTicket(null);
     setPlateNumber("");
@@ -37,21 +35,21 @@ export default function KioskPage() {
     setMatchingCars([]);
   };
 
-  const handleKeypad = (num: string) => {
+  const handleKeypad = (num: string): void => {
     if (plateNumber.length < 4) {
       setPlateNumber((prev) => prev + num);
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = (): void => {
     setPlateNumber((prev) => prev.slice(0, -1));
   };
 
-  const handleClear = () => {
+  const handleClear = (): void => {
     setPlateNumber("");
   };
 
-  const handleSearchCars = () => {
+  const handleSearchCars = (): void => {
     // 나중에 실제 크롤링 시 가져올 임시 리스트
     setMatchingCars([
       { platePrefix: "12가", plateNumber: plateNumber },
