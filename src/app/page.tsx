@@ -1,65 +1,267 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import React, { useState, useEffect } from "react";
+import styles from "../styles/kiosk.module.scss";
+import { Car, Clock, Infinity, CheckCircle2, ChevronLeft, Home } from "lucide-react";
+
+type Step = 0 | 1 | 2 | 3 | 4;
+type TicketType = "2hours" | "unlimited" | null;
+
+interface CarData {
+  platePrefix: string;
+  plateNumber: string;
+}
+
+export default function KioskPage() {
+  const [step, setStep] = useState<Step>(0);
+  const [ticket, setTicket] = useState<TicketType>(null);
+  const [plateNumber, setPlateNumber] = useState("");
+  const [matchingCars, setMatchingCars] = useState<CarData[]>([]);
+  const [selectedCar, setSelectedCar] = useState<CarData | null>(null);
+
+  // 정산 완료 시 5초 후 처음으로 돌아가기
+  useEffect(() => {
+    if (step === 4) {
+      const timer = setTimeout(() => {
+        resetKiosk();
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [step]);
+
+  const resetKiosk = () => {
+    setStep(0);
+    setTicket(null);
+    setPlateNumber("");
+    setSelectedCar(null);
+    setMatchingCars([]);
+  };
+
+  const handleKeypad = (num: string) => {
+    if (plateNumber.length < 4) {
+      setPlateNumber((prev) => prev + num);
+    }
+  };
+
+  const handleDelete = () => {
+    setPlateNumber((prev) => prev.slice(0, -1));
+  };
+
+  const handleClear = () => {
+    setPlateNumber("");
+  };
+
+  const handleSearchCars = () => {
+    // 나중에 실제 크롤링 시 가져올 임시 리스트
+    setMatchingCars([
+      { platePrefix: "12가", plateNumber: plateNumber },
+      { platePrefix: "151하", plateNumber: plateNumber },
+    ]);
+    setSelectedCar(null);
+    setStep(3);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className={styles.kioskContainer}>
+      <div className={styles.kioskCard}>
+        {/* Left Panel - 브랜드 로고 & 메인 안내 */}
+        <div className={styles.leftPanel}>
+          <div className={styles.logoSection}>
+            <img src="/logo.png" alt="고고 다이노 로고" className={styles.logo} />
+            <h1>주차 정산 시스템</h1>
+            <p>
+              {step === 0 && "화면을 터치해서 시작해주세요!"}
+              {step === 1 && "1. 이용권 선택"}
+              {step === 2 && "2. 차량 번호 4자리 입력"}
+              {step === 3 && "3. 차량 확인 및 정산"}
+              {step === 4 && "정산이 완료되었습니다."}
+            </p>
+          </div>
+
+          {/* 왼쪽 가장 아래 위치할 홈 버튼 */}
+          {step > 0 && step < 4 && (
+            <button className={styles.homeBtn} onClick={resetKiosk}>
+              <Home size={20} /> 처음으로 돌아가기
+            </button>
+          )}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Right Panel - 실제 터치 상호작용 영역 */}
+        <div className={styles.rightPanel}>
+          {/* 상단: 뒤로가기 버튼만 독립적인 공간 배정 (겹침 방지) Step 3부터는 지움 */}
+          <div className={styles.rightHeader}>
+            {step > 0 && step < 3 && (
+              <button
+                className={styles.backBtn}
+                onClick={() => setStep((prev) => (prev - 1) as Step)}
+              >
+                <ChevronLeft size={20} /> 이전으로
+              </button>
+            )}
+          </div>
+
+          <div className={styles.stepContent}>
+            {/* Step 0: 시작 버튼 영역 */}
+            {step === 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
+                <div className={styles.stepHeader}>
+                  <h2 style={{ fontSize: '2.8rem', marginBottom: '40px', whiteSpace: 'normal' }}>
+                    주차 정산을 <br /> 시작하시겠습니까?
+                  </h2>
+                </div>
+                <button className={styles.startBtn} onClick={() => setStep(1)}>
+                  주차 정산 시작하기
+                </button>
+              </div>
+            )}
+
+            {/* Step 1: 이용권 선택 */}
+            {step === 1 && (
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
+                <div className={styles.stepHeader}>
+                  <h2>이용하신 입장권 종류를 선택해 주세요</h2>
+                </div>
+                <div className={styles.ticketGrid}>
+                  <div className={styles.ticketBtn} onClick={() => { setTicket("2hours"); setStep(2); }}>
+                    <Clock className={styles.ticketIcon} color="#009fe3" size={70} />
+                    <span className={styles.ticketTitle}>기본 2시간권</span>
+                  </div>
+                  <div className={styles.ticketBtn} onClick={() => { setTicket("unlimited"); setStep(2); }}>
+                    <Infinity className={styles.ticketIcon} color="#ef3322" size={70} />
+                    <span className={styles.ticketTitle}>종일권 (무제한)</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: 키패드 (차량 번호 입력) */}
+            {step === 2 && (
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
+                <div className={styles.stepHeader}>
+                  <h2>차량 번호 4자리를 입력해주세요</h2>
+                </div>
+
+                <div className={styles.plateInputContainer}>
+                  <div className={styles.plateTop}>
+                    <div className={styles.plateInputBox}>
+                      {plateNumber || <span style={{ color: "#cbd5e1" }}>0 0 0 0</span>}
+                    </div>
+                    <button
+                      className={styles.primaryBtn}
+                      onClick={handleSearchCars}
+                      disabled={plateNumber.length < 4}
+                      style={{ height: '100%', minWidth: '150px', margin: 0, padding: '0 15px', fontSize: '1.6rem', whiteSpace: 'nowrap' }}
+                    >
+                      차량 조회
+                    </button>
+                  </div>
+
+                  <div className={styles.plateBottom}>
+                    <div className={styles.keypad}>
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+                        <button key={num} className={styles.keypadBtn} onClick={() => handleKeypad(num.toString())}>
+                          {num}
+                        </button>
+                      ))}
+                      <button className={`${styles.keypadBtn} ${styles.actionBtn} ${styles.clearBtn}`} onClick={handleClear}>
+                        전체 지움
+                      </button>
+                      <button className={styles.keypadBtn} onClick={() => handleKeypad("0")}>
+                        0
+                      </button>
+                      <button className={`${styles.keypadBtn} ${styles.actionBtn} ${styles.backspaceBtn}`} onClick={handleDelete}>
+                        지우기
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: 차량 선택 및 확인 페이지 */}
+            {step === 3 && (
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'flex-start' }}>
+                <div className={styles.stepHeader} style={{ marginBottom: '20px' }}>
+                  <h2>내 차량을 눌러 선택해주세요</h2>
+                </div>
+
+                <div className={styles.carListGrid}>
+                  {matchingCars.map((car, idx) => (
+                    <div
+                      key={idx}
+                      className={`${styles.carListItem} ${selectedCar === car ? styles.selected : ""}`}
+                      onClick={() => setSelectedCar(car)}
+                    >
+                      <div className={styles.carListImage}>
+                        <Car size={50} color={selectedCar === car ? "#009fe3" : "#94a3b8"} />
+                      </div>
+                      <div className={styles.carListInfo}>
+                        <div className={styles.carListPlate}>
+                          {car.platePrefix} {car.plateNumber}
+                        </div>
+                        <div style={{
+                          color: '#009fe3',
+                          fontSize: '1.2rem',
+                          fontWeight: 800,
+                          marginTop: '5px',
+                          visibility: selectedCar === car ? 'visible' : 'hidden'
+                        }}>
+                          선택됨
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* 선택한 차량 사진 썸네일 표시 */}
+                {selectedCar ? (
+                  <div className={styles.carPreviewBox}>
+                    <div className={styles.carPreviewImg}>
+                      {/* 나중에 실제 크롤링 시 가져온 입차 이미지 URL 렌더링하도록 img 태그를 사용할 수 있습니다 */}
+                      <Car size={100} color="#94a3b8" />
+                    </div>
+                  </div>
+                ) : (
+                  <div className={styles.carPreviewPlaceholder}>
+                    상단의 목록에서 차량을 선택하시면 사진이 표시됩니다.
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '20px', marginTop: 'auto', paddingTop: '10px', paddingBottom: '10px' }}>
+                  <button
+                    className={styles.secondaryBtn}
+                    onClick={() => setStep(2)}
+                    style={{ flex: 1, margin: 0, border: '3px solid #e2e8f0', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '70px', borderRadius: '20px' }}
+                  >
+                    이전으로
+                  </button>
+                  <button
+                    className={styles.primaryBtn}
+                    onClick={() => setStep(4)}
+                    disabled={!selectedCar}
+                    style={{ flex: 2, marginTop: 0, margin: 0, height: '70px', fontSize: '1.4rem', whiteSpace: 'nowrap', padding: '0 10px' }}
+                  >
+                    네, 정산합니다 ({ticket === "2hours" ? "2시간권" : "종일 무제한권"})
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 4: 완료 페이지 */}
+            {step === 4 && (
+              <div className={styles.completeText}>
+                <CheckCircle2 size={100} color="#86c043" style={{ marginBottom: "20px" }} />
+                <h2>정산 완료!</h2>
+                <p>이용해주셔서 감사합니다.<br />안녕히 가세요! 🦖</p>
+
+                <button className={styles.secondaryBtn} onClick={resetKiosk} style={{ marginTop: "30px", fontSize: "1.5rem" }}>
+                  처음 화면으로 돌아가기
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
