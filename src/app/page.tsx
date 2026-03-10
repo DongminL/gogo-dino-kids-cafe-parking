@@ -60,11 +60,11 @@ export default function KioskPage() {
   };
 
   return (
-    <div className={styles.kioskContainer}>
-      <div className={styles.kioskCard}>
+    <main className={styles.kioskContainer}>
+      <section className={styles.kioskCard}>
         {/* Left Panel - 브랜드 로고 & 메인 안내 */}
-        <div className={styles.leftPanel}>
-          <div className={styles.logoSection}>
+        <aside className={styles.leftPanel}>
+          <header className={styles.logoSection}>
             <img src="/logo.png" alt="고고 다이노 로고" className={styles.logo} />
             <h1>주차 정산 시스템</h1>
             <p>
@@ -74,7 +74,7 @@ export default function KioskPage() {
               {step === 3 && "3. 차량 확인 및 정산"}
               {step === 4 && "정산이 완료되었습니다."}
             </p>
-          </div>
+          </header>
 
           {/* 왼쪽 가장 아래 위치할 홈 버튼 */}
           {step > 0 && step < 4 && (
@@ -82,12 +82,12 @@ export default function KioskPage() {
               <Home size={20} /> 처음으로 돌아가기
             </button>
           )}
-        </div>
+        </aside>
 
         {/* Right Panel - 실제 터치 상호작용 영역 */}
-        <div className={styles.rightPanel}>
+        <section className={styles.rightPanel}>
           {/* 상단: 뒤로가기 버튼만 독립적인 공간 배정 (겹침 방지) Step 3부터는 지움 */}
-          <div className={styles.rightHeader}>
+          <nav className={styles.rightHeader}>
             {step > 0 && step < 3 && (
               <button
                 className={styles.backBtn}
@@ -96,17 +96,17 @@ export default function KioskPage() {
                 <ChevronLeft size={20} /> 이전으로
               </button>
             )}
-          </div>
+          </nav>
 
-          <div className={styles.stepContent}>
+          <article className={styles.stepContent}>
             {/* Step 0: 시작 버튼 영역 */}
             {step === 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
-                <div className={styles.stepHeader}>
+                <header className={styles.stepHeader}>
                   <h2 style={{ fontSize: '2.8rem', marginBottom: '40px', whiteSpace: 'normal' }}>
                     주차 정산을 <br /> 시작하시겠습니까?
                   </h2>
-                </div>
+                </header>
                 <button className={styles.startBtn} onClick={() => setStep(1)}>
                   주차 정산 시작하기
                 </button>
@@ -116,9 +116,9 @@ export default function KioskPage() {
             {/* Step 1: 이용권 선택 */}
             {step === 1 && (
               <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
-                <div className={styles.stepHeader}>
+                <header className={styles.stepHeader}>
                   <h2>이용하신 입장권 종류를 선택해 주세요</h2>
-                </div>
+                </header>
                 <div className={styles.ticketGrid}>
                   <div className={styles.ticketBtn} onClick={() => { setTicket("2hours"); setStep(2); }}>
                     <Clock className={styles.ticketIcon} color="#009fe3" size={70} />
@@ -135,9 +135,9 @@ export default function KioskPage() {
             {/* Step 2: 키패드 (차량 번호 입력) */}
             {step === 2 && (
               <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
-                <div className={styles.stepHeader}>
+                <header className={styles.stepHeader}>
                   <h2>차량 번호 4자리를 입력해주세요</h2>
-                </div>
+                </header>
 
                 <div className={styles.plateInputContainer}>
                   <div className={styles.plateTop}>
@@ -179,9 +179,9 @@ export default function KioskPage() {
             {/* Step 3: 차량 선택 및 확인 페이지 */}
             {step === 3 && (
               <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'flex-start' }}>
-                <div className={styles.stepHeader} style={{ marginBottom: '20px' }}>
+                <header className={styles.stepHeader} style={{ marginBottom: '20px' }}>
                   <h2>내 차량을 눌러 선택해주세요</h2>
-                </div>
+                </header>
 
                 <div className={styles.carListGrid}>
                   {matchingCars.map((car, idx) => (
@@ -213,12 +213,12 @@ export default function KioskPage() {
 
                 {/* 선택한 차량 사진 썸네일 표시 */}
                 {selectedCar ? (
-                  <div className={styles.carPreviewBox}>
+                  <figure className={styles.carPreviewBox}>
                     <div className={styles.carPreviewImg}>
                       {/* 나중에 실제 크롤링 시 가져온 입차 이미지 URL 렌더링하도록 img 태그를 사용할 수 있습니다 */}
                       <Car size={100} color="#94a3b8" />
                     </div>
-                  </div>
+                  </figure>
                 ) : (
                   <div className={styles.carPreviewPlaceholder}>
                     상단의 목록에서 차량을 선택하시면 사진이 표시됩니다.
@@ -257,9 +257,9 @@ export default function KioskPage() {
                 </button>
               </div>
             )}
-          </div>
-        </div>
-      </div>
-    </div>
+          </article>
+        </section>
+      </section>
+    </main>
   );
 }
