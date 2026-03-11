@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import puppeteer, { Browser, Page } from "puppeteer";
+import { calculateDiscountCount } from "@/lib/parking-utils";
 
 // 싱글톤: global에 저장해야 Next.js HMR 모듈 재로드 시에도 유지됨
 declare global {
@@ -17,17 +18,12 @@ interface CarData {
   inDateTime: string;
 }
 
-// 이용권 종류별 최대 부여 가능한 할인권 개수 (30분권 개수)
-const MAX_DISCOUNT_COUNT: Record<string, number> = {
-  "2hours": 8,    // 2시간권: 최대 8개 부과 (4시간)
-  "unlimited": 12, // 종일권: 최대 12개 부과 (6시간)
-};
 
 async function getParkingPage(): Promise<Page> {
   // 브라우저가 없거나 연결이 끊긴 경우 새로 실행
   if (!global._parkingBrowser || !global._parkingBrowser.connected) {
     global._parkingBrowser = await puppeteer.launch({
-      headless: false,
+      headless: true,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
@@ -173,25 +169,4 @@ async function applyParkingDiscount(
   await page.click("div.modal-footer > button.bootbox-accept");
 
   console.log(`주차 정산 완료 (차량번호: ${carNo}, 입장권: ${ticketType})`);
-}
-
-function calculateDiscountCount(
-  inDateTime: string,
-  ticketType: string,
-  alreadyHas4h: boolean
-): number {
-  const inTime: Date = new Date(inDateTime);
-  const now: Date = new Date();
-  let diffMinutes: number = Math.floor((now.getTime() - inTime.getTime()) / 60_000);
-
-  // 4시간권이 이미 적용된 경우
-  if (alreadyHas4h) {
-    diffMinutes -= 240;
-  }
-
-  let count: number = Math.ceil((diffMinutes + 25) / 30); // 할인권(30분) 개수
-  count = count < 0 ? 0 : count;
-  count = Math.min(count, MAX_DISCOUNT_COUNT[ticketType]);
-
-  return count;
 }
