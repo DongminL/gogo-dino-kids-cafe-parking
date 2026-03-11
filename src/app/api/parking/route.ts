@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import puppeteer, { Browser, Page } from "puppeteer-core";                                     
-import chromium from "@sparticuz/chromium";
+import chromium from "@sparticuz/chromium-min";
 import { calculateDiscountCount } from "@/lib/parking-utils";
 
 // 싱글톤: global에 저장해야 Next.js HMR 모듈 재로드 시에도 유지됨
@@ -91,7 +91,9 @@ async function getLaunchOptions() {
         ...chromium.args, 
         "--disable-features=HttpsFirstBalancedModeAutoEnable"
       ],
-      executablePath: await chromium.executablePath(),
+      executablePath: await chromium.executablePath(
+        "https://github.com/Sparticuz/chromium/releases/download/v143.0.4/chromium-v143.0.4-pack.tar"
+      ),
       headless: true as const,
     };
   }
