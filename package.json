@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
-    "@sparticuz/chromium": "^143.0.4",
+    "@sparticuz/chromium-min": "^143.0.4",
     "@types/cheerio": "^0.22.35",
     "@types/puppeteer": "^5.4.7",
     "cheerio": "^1.2.0",
