@@ -158,6 +158,23 @@ export default function KioskPage() {
                     주차 정산을 <br /> 시작하시겠습니까?
                   </h2>
                 </header>
+
+                <div className={styles.characterNoticeWrapper}>
+                  <div className={styles.characterImgBox}>
+                    <img
+                      src="/character.png"
+                      alt="고고 다이노 캐릭터"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                  </div>
+                  <div className={styles.speechBubble}>
+                    <div className={styles.speechText}>
+                      앗, 잠깐! 퇴장 처리는 하셨나요?<br />
+                      <strong>퇴장 처리 먼저 부탁드립니다!</strong>
+                    </div>
+                  </div>
+                </div>
+
                 <button className={styles.startBtn} onClick={() => setStep(1)}>
                   주차 정산 시작하기
                 </button>
