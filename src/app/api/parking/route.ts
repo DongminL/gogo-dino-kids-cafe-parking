@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
           return {
             platePrefix: carNo.slice(0, carNo.length - carNoNo.length),
             plateNumber: carNoNo,
-            imageUrl: baseUrl + fileUrl + filePath,
+            imageUrl: `/api/image?url=${encodeURIComponent(baseUrl + fileUrl + filePath)}`,
             inDateTime: inDateTime,
           };
         }),
