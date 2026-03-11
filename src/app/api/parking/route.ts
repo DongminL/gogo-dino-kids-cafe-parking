@@ -18,7 +18,6 @@ interface CarData {
   inDateTime: string;
 }
 
-
 async function getParkingPage(): Promise<Page> {
   // 브라우저가 없거나 연결이 끊긴 경우 새로 실행
   if (!global._parkingBrowser || !global._parkingBrowser.connected) {
@@ -36,18 +35,8 @@ async function getParkingPage(): Promise<Page> {
   // 페이지가 없거나 닫힌 경우 새로 열고 로그인
   if (!global._parkingPage || global._parkingPage.isClosed()) {
     global._parkingPage = await global._parkingBrowser.newPage();
-
     await global._parkingPage.goto(process.env.PARKING_CAR_URL!, { waitUntil: "domcontentloaded" });
-
-    // 로그인 폼이 있으면 로그인
-    const needsLogin = (await global._parkingPage.$("#loginId")) !== null;
-    if (needsLogin) {
-      await global._parkingPage.type("#loginId", process.env.PARKING_ID!);
-      await global._parkingPage.type("#loginPw", process.env.PARKING_PW!);
-      await global._parkingPage.click("#loginBtn");
-      await global._parkingPage.waitForSelector("#carNo");
-      console.log("login success");
-    }
+    await ensureLogIn(global._parkingPage);
   }
 
   return global._parkingPage;
@@ -74,8 +63,13 @@ export async function GET(request: NextRequest) {
   try {
     const page = await getParkingPage();
 
-    // 차량 번호 조회
-    await page.goto(process.env.PARKING_CAR_URL! + `?carNo=${carNo}`, { waitUntil: "domcontentloaded" });
+    // 차량 번호 조회 (세션 만료 시 재로그인 후 재이동)
+    const targetUrl = process.env.PARKING_CAR_URL! + `?carNo=${carNo}`;
+    await page.goto(targetUrl, { waitUntil: "domcontentloaded" });
+    const relogged = await ensureLogIn(page);
+    if (relogged) {
+      await page.goto(targetUrl, { waitUntil: "domcontentloaded" });
+    }
 
     const baseUrl: string = process.env.PARKING_BASE_URL!;
 
@@ -113,6 +107,23 @@ export async function GET(request: NextRequest) {
     global._parkingPage = null;
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
+}
+
+// 로그인 페이지일 때, 로그인 함 (로그인한 여부 반환)
+async function ensureLogIn(page: Page): Promise<boolean> {
+  const needsLogin = (await page.$("#loginId")) !== null;
+
+  if (needsLogin) {
+    await page.type("#loginId", process.env.PARKING_ID!);
+    await page.type("#loginPw", process.env.PARKING_PW!);
+    await page.click("#loginBtn");
+    await page.waitForSelector("#carNo");
+    console.log("login success");
+
+    return true;
+  }
+
+  return false;
 }
 
 async function applyParkingDiscount(
