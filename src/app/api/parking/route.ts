@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import puppeteer, { Browser, Page } from "puppeteer";
+import puppeteer, { Browser, Page } from "puppeteer-core";                                     
+import chromium from "@sparticuz/chromium";
 import { calculateDiscountCount } from "@/lib/parking-utils";
 
 // 싱글톤: global에 저장해야 Next.js HMR 모듈 재로드 시에도 유지됨
@@ -63,8 +64,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ cars });
   } catch (error) {
-    global._parkingPage?.close();
-    global._parkingPage = null;
+    await closeBrowser();
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }
@@ -79,23 +79,37 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    global._parkingPage?.close();
-    global._parkingPage = null;
+    await closeBrowser();
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
+}
+
+async function getLaunchOptions() {
+  if (process.env.VERCEL) {
+    return {
+      args: [
+        ...chromium.args, 
+        "--disable-features=HttpsFirstBalancedModeAutoEnable"
+      ],
+      executablePath: await chromium.executablePath(),
+      headless: true as const,
+    };
+  }
+  return {
+    args: [
+      "--no-sandbox", 
+      "--disable-setuid-sandbox", 
+      "--disable-features=HttpsFirstBalancedModeAutoEnable"
+    ],
+    executablePath: process.env.CHROME_PATH!,
+    headless: true as const,
+  };
 }
 
 async function getParkingPage(): Promise<Page> {
   // 브라우저가 없거나 연결이 끊긴 경우 새로 실행
   if (!global._parkingBrowser || !global._parkingBrowser.connected) {
-    global._parkingBrowser = await puppeteer.launch({
-      headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-features=HttpsFirstBalancedModeAutoEnable",
-      ],
-    });
+    global._parkingBrowser = await puppeteer.launch(await getLaunchOptions());
     global._parkingPage = null;
   }
 
@@ -180,4 +194,11 @@ async function applyParkingDiscount(
   await page.click("div.modal-footer > button.bootbox-accept");
 
   console.log(`주차 정산 완료 (차량번호: ${carNo}, 입장권: ${ticketType})`);
+}
+
+async function closeBrowser() {
+  await global._parkingPage?.close();
+  global._parkingPage = null;
+  await global._parkingBrowser?.close();
+  global._parkingBrowser = null;
 }
