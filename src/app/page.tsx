@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import styles from "../styles/kiosk.module.scss";
-import { Car, Clock, Infinity, CheckCircle2, ChevronLeft, Home } from "lucide-react";
+import { Car, Clock, Infinity, CheckCircle2, ChevronLeft, Home, AlertCircle } from "lucide-react";
 
 type Step = 0 | 1 | 2 | 3 | 4;
 type TicketType = "2hours" | "unlimited" | null;
@@ -10,6 +10,8 @@ type TicketType = "2hours" | "unlimited" | null;
 interface CarData {
   platePrefix: string;
   plateNumber: string;
+  imageUrl: string;
+  inDateTime: string;
 }
 
 export default function KioskPage() {
@@ -18,6 +20,8 @@ export default function KioskPage() {
   const [plateNumber, setPlateNumber] = useState("");
   const [matchingCars, setMatchingCars] = useState<CarData[]>([]);
   const [selectedCar, setSelectedCar] = useState<CarData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSettling, setIsSettling] = useState(false);
 
   // 정산 완료 시 5초 후 처음으로 돌아가기
   useEffect(() => {
@@ -33,6 +37,40 @@ export default function KioskPage() {
     setPlateNumber("");
     setSelectedCar(null);
     setMatchingCars([]);
+    setIsSettling(false);
+  };
+
+  const handleSettle = async (): Promise<void> => {
+    if (!selectedCar || !ticket) {
+      return;
+    }
+
+    setIsSettling(true);
+    try {
+      const carNo = selectedCar.platePrefix + selectedCar.plateNumber;
+
+      const res = await fetch("/api/parking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          carNo,
+          inDateTime: selectedCar.inDateTime,
+          ticketType: ticket,
+        }),
+      });
+      const data = await res.json();
+
+      if (data.error) {
+        console.error("정산 오류:", data.error);
+        return;
+      }
+
+      setStep(4);
+    } catch (error) {
+      console.error("정산 API 호출 오류:", error);
+    } finally {
+      setIsSettling(false);
+    }
   };
 
   const handleKeypad = (num: string): void => {
@@ -49,14 +87,27 @@ export default function KioskPage() {
     setPlateNumber("");
   };
 
-  const handleSearchCars = (): void => {
-    // 나중에 실제 크롤링 시 가져올 임시 리스트
-    setMatchingCars([
-      { platePrefix: "12가", plateNumber: plateNumber },
-      { platePrefix: "151하", plateNumber: plateNumber },
-    ]);
-    setSelectedCar(null);
-    setStep(3);
+  const handleSearchCars = async (): Promise<void> => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/parking?carNo=${plateNumber}`);
+
+      const data = await res.json();
+      console.debug(data);
+
+      if (data.error) {
+        console.error("크롤링 오류:", data.error);
+        return;
+      }
+
+      setMatchingCars(data.cars ?? []);
+      setSelectedCar(null);
+      setStep(3);
+    } catch (error) {
+      console.error("API 호출 오류:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -107,6 +158,23 @@ export default function KioskPage() {
                     주차 정산을 <br /> 시작하시겠습니까?
                   </h2>
                 </header>
+
+                <div className={styles.characterNoticeWrapper}>
+                  <div className={styles.characterImgBox}>
+                    <img
+                      src="/character.png"
+                      alt="고고 다이노 캐릭터"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                  </div>
+                  <div className={styles.speechBubble}>
+                    <div className={styles.speechText}>
+                      앗, 잠깐! 퇴장 처리는 하셨나요?<br />
+                      <strong>퇴장 처리 먼저 부탁드립니다!</strong>
+                    </div>
+                  </div>
+                </div>
+
                 <button className={styles.startBtn} onClick={() => setStep(1)}>
                   주차 정산 시작하기
                 </button>
@@ -122,7 +190,7 @@ export default function KioskPage() {
                 <div className={styles.ticketGrid}>
                   <div className={styles.ticketBtn} onClick={() => { setTicket("2hours"); setStep(2); }}>
                     <Clock className={styles.ticketIcon} color="#009fe3" size={70} />
-                    <span className={styles.ticketTitle}>기본 2시간권</span>
+                    <span className={styles.ticketTitle}>2시간권</span>
                   </div>
                   <div className={styles.ticketBtn} onClick={() => { setTicket("unlimited"); setStep(2); }}>
                     <Infinity className={styles.ticketIcon} color="#ef3322" size={70} />
@@ -147,9 +215,9 @@ export default function KioskPage() {
                     <button
                       className={`${styles.primaryBtn} ${styles.searchBtn}`}
                       onClick={handleSearchCars}
-                      disabled={plateNumber.length < 4}
+                      disabled={plateNumber.length < 4 || isLoading}
                     >
-                      차량 조회
+                      {isLoading ? "조회 중..." : "차량 조회"}
                     </button>
                   </div>
 
@@ -178,61 +246,88 @@ export default function KioskPage() {
             {/* Step 3: 차량 선택 및 확인 페이지 */}
             {step === 3 && (
               <div className={styles.stepLayoutStart}>
-                <header className={`${styles.stepHeader} ${styles.smallMargin}`}>
-                  <h2>내 차량을 눌러 선택해주세요</h2>
-                </header>
-
-                <div className={styles.carListGrid}>
-                  {matchingCars.map((car, idx) => (
-                    <div
-                      key={idx}
-                      className={`${styles.carListItem} ${selectedCar === car ? styles.selected : ""}`}
-                      onClick={() => setSelectedCar(car)}
-                    >
-                      <div className={styles.carListImage}>
-                        <Car size={50} color={selectedCar === car ? "#009fe3" : "#94a3b8"} />
-                      </div>
-                      <div className={styles.carListInfo}>
-                        <div className={styles.carListPlate}>
-                          {car.platePrefix} {car.plateNumber}
-                        </div>
-                        <div className={`${styles.selectedStatus} ${selectedCar === car ? styles.visible : ''}`}>
-                          선택됨
-                        </div>
-                      </div>
+                {matchingCars.length === 0 ? (
+                  <>
+                    <header className={`${styles.stepHeader} ${styles.smallMargin}`}>
+                      <h2>차량이 조회되지 않았습니다</h2>
+                    </header>
+                    <div className={styles.notFoundMessage}>
+                      <AlertCircle size={70} color="#ef3322" className={styles.notFoundIcon} />
+                      <p>
+                        입력하신 번호(<strong>{plateNumber}</strong>)로<br />
+                        등록된 차량을 찾을 수 없습니다.
+                      </p>
+                      <p className={styles.subText}>
+                        번호를 다시 확인하고 재조회해 주세요.
+                      </p>
                     </div>
-                  ))}
-                </div>
-
-                {/* 선택한 차량 사진 썸네일 표시 */}
-                {selectedCar ? (
-                  <figure className={styles.carPreviewBox}>
-                    <div className={styles.carPreviewImg}>
-                      {/* 나중에 실제 크롤링 시 가져온 입차 이미지 URL 렌더링하도록 img 태그를 사용할 수 있습니다 */}
-                      <Car size={100} color="#94a3b8" />
+                    <div className={styles.actionRow}>
+                      <button
+                        className={`${styles.secondaryBtn} ${styles.actionBtnPrev}`}
+                        onClick={() => setStep(2)}
+                      >
+                        이전으로
+                      </button>
                     </div>
-                  </figure>
+                  </>
                 ) : (
-                  <div className={styles.carPreviewPlaceholder}>
-                    상단의 목록에서 차량을 선택하시면 사진이 표시됩니다.
-                  </div>
-                )}
+                  <>
+                    <header className={`${styles.stepHeader} ${styles.smallMargin}`}>
+                      <h2>내 차량을 눌러 선택해주세요</h2>
+                    </header>
 
-                <div className={styles.actionRow}>
-                  <button
-                    className={`${styles.secondaryBtn} ${styles.actionBtnPrev}`}
-                    onClick={() => setStep(2)}
-                  >
-                    이전으로
-                  </button>
-                  <button
-                    className={`${styles.primaryBtn} ${styles.actionBtnNext}`}
-                    onClick={() => setStep(4)}
-                    disabled={!selectedCar}
-                  >
-                    네, 정산합니다 ({ticket === "2hours" ? "2시간권" : "종일 무제한권"})
-                  </button>
-                </div>
+                    <div className={styles.carListGrid}>
+                      {matchingCars.map((car, idx) => (
+                        <div
+                          key={idx}
+                          className={`${styles.carListItem} ${selectedCar === car ? styles.selected : ""}`}
+                          onClick={() => setSelectedCar(car)}
+                        >
+                          <div className={styles.carListImage}>
+                            <Car size={50} color={selectedCar === car ? "#009fe3" : "#94a3b8"} />
+                          </div>
+                          <div className={styles.carListInfo}>
+                            <div className={styles.carListPlate}>
+                              {car.platePrefix} {car.plateNumber}
+                            </div>
+                            <div className={`${styles.selectedStatus} ${selectedCar === car ? styles.visible : ''}`}>
+                              선택됨
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* 선택한 차량 사진 썸네일 표시 */}
+                    {selectedCar ? (
+                      <figure className={styles.carPreviewBox}>
+                        <div className={styles.carPreviewImg}>
+                          <img src={selectedCar.imageUrl} alt="입차 차량 사진" />
+                        </div>
+                      </figure>
+                    ) : (
+                      <div className={styles.carPreviewPlaceholder}>
+                        상단의 목록에서 차량을 선택하시면 사진이 표시됩니다.
+                      </div>
+                    )}
+
+                    <div className={styles.actionRow}>
+                      <button
+                        className={`${styles.secondaryBtn} ${styles.actionBtnPrev}`}
+                        onClick={() => setStep(2)}
+                      >
+                        이전으로
+                      </button>
+                      <button
+                        className={`${styles.primaryBtn} ${styles.actionBtnNext}`}
+                        onClick={handleSettle}
+                        disabled={!selectedCar || isSettling}
+                      >
+                        {isSettling ? "정산 중..." : `네, 정산합니다 (${ticket === "2hours" ? "2시간권" : "종일 무제한권"})`}
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
