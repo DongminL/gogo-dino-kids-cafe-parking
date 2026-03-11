@@ -1,0 +1,8 @@
+{
+  "regions": ["icn1"],
+  "functions": {
+    "src/app/api/parking/route.ts": {
+      "maxDuration": 60
+    }
+  }
+}
