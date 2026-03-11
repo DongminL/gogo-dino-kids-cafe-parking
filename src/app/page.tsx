@@ -66,6 +66,31 @@ export default function KioskPage() {
         console.error("크롤링 오류:", data.error);
         return;
       }
+      // // 테스트를 위한 3개 이상의 CarData 목업 데이터
+      // const mock: { cars: CarData[] } = {
+      //   cars: [
+      //     {
+      //       platePrefix: "12가",
+      //       plateNumber: "1234",
+      //       imageUrl: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&q=80&w=800",
+      //     },
+      //     {
+      //       platePrefix: "34나",
+      //       plateNumber: "1234",
+      //       imageUrl: "https://images.unsplash.com/photo-1550355291-bbee04a92027?auto=format&fit=crop&q=80&w=800",
+      //     },
+      //     {
+      //       platePrefix: "56다",
+      //       plateNumber: "1234",
+      //       imageUrl: "https://images.unsplash.com/photo-1542362567-b07e54358753?auto=format&fit=crop&q=80&w=800",
+      //     },
+      //     {
+      //       platePrefix: "78라",
+      //       plateNumber: "1234",
+      //       imageUrl: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=800",
+      //     },
+      //   ],
+      // };
 
       setMatchingCars(data.cars ?? []);
       setSelectedCar(null);
@@ -252,7 +277,7 @@ export default function KioskPage() {
                     {selectedCar ? (
                       <figure className={styles.carPreviewBox}>
                         <div className={styles.carPreviewImg}>
-                          <img src={selectedCar.imageUrl} alt="입차 차량 사진" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          <img src={selectedCar.imageUrl} alt="입차 차량 사진" />
                         </div>
                       </figure>
                     ) : (
