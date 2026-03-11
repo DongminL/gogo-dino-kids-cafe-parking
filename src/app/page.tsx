@@ -11,6 +11,7 @@ interface CarData {
   platePrefix: string;
   plateNumber: string;
   imageUrl: string;
+  inDateTime: string;
 }
 
 export default function KioskPage() {
@@ -20,6 +21,8 @@ export default function KioskPage() {
   const [matchingCars, setMatchingCars] = useState<CarData[]>([]);
   const [selectedCar, setSelectedCar] = useState<CarData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSettling, setIsSettling] = useState(false);
+
   // 정산 완료 시 5초 후 처음으로 돌아가기
   useEffect(() => {
     if (step === 4) {
@@ -34,6 +37,40 @@ export default function KioskPage() {
     setPlateNumber("");
     setSelectedCar(null);
     setMatchingCars([]);
+    setIsSettling(false);
+  };
+
+  const handleSettle = async (): Promise<void> => {
+    if (!selectedCar || !ticket) {
+      return;
+    }
+
+    setIsSettling(true);
+    try {
+      const carNo = selectedCar.platePrefix + selectedCar.plateNumber;
+
+      const res = await fetch("/api/parking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          carNo,
+          inDateTime: selectedCar.inDateTime,
+          ticketType: ticket,
+        }),
+      });
+      const data = await res.json();
+
+      if (data.error) {
+        console.error("정산 오류:", data.error);
+        return;
+      }
+
+      setStep(4);
+    } catch (error) {
+      console.error("정산 API 호출 오류:", error);
+    } finally {
+      setIsSettling(false);
+    }
   };
 
   const handleKeypad = (num: string): void => {
@@ -136,7 +173,7 @@ export default function KioskPage() {
                 <div className={styles.ticketGrid}>
                   <div className={styles.ticketBtn} onClick={() => { setTicket("2hours"); setStep(2); }}>
                     <Clock className={styles.ticketIcon} color="#009fe3" size={70} />
-                    <span className={styles.ticketTitle}>기본 2시간권</span>
+                    <span className={styles.ticketTitle}>2시간권</span>
                   </div>
                   <div className={styles.ticketBtn} onClick={() => { setTicket("unlimited"); setStep(2); }}>
                     <Infinity className={styles.ticketIcon} color="#ef3322" size={70} />
@@ -266,10 +303,10 @@ export default function KioskPage() {
                       </button>
                       <button
                         className={`${styles.primaryBtn} ${styles.actionBtnNext}`}
-                        onClick={() => setStep(4)}
-                        disabled={!selectedCar}
+                        onClick={handleSettle}
+                        disabled={!selectedCar || isSettling}
                       >
-                        네, 정산합니다 ({ticket === "2hours" ? "2시간권" : "종일 무제한권"})
+                        {isSettling ? "정산 중..." : `네, 정산합니다 (${ticket === "2hours" ? "2시간권" : "종일 무제한권"})`}
                       </button>
                     </div>
                   </>

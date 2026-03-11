@@ -17,6 +17,12 @@ interface CarData {
   inDateTime: string;
 }
 
+// 이용권 종류별 최대 부여 가능한 할인권 개수 (30분권 개수)
+const MAX_DISCOUNT_COUNT: Record<string, number> = {
+  "2hours": 8,    // 2시간권: 최대 8개 부과 (4시간)
+  "unlimited": 12, // 종일권: 최대 12개 부과 (6시간)
+};
+
 async function getParkingPage(): Promise<Page> {
   // 브라우저가 없거나 연결이 끊긴 경우 새로 실행
   if (!global._parkingBrowser || !global._parkingBrowser.connected) {
@@ -51,6 +57,21 @@ async function getParkingPage(): Promise<Page> {
   return global._parkingPage;
 }
 
+export async function POST(request: NextRequest) {
+  const { carNo, inDateTime, ticketType } = await request.json();
+
+  try {
+    const page = await getParkingPage();
+
+    await applyParkingDiscount(page, carNo, inDateTime, ticketType);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    global._parkingPage = null;
+    return NextResponse.json({ error: String(error) }, { status: 500 });
+  }
+}
+
 export async function GET(request: NextRequest) {
   const carNo = request.nextUrl.searchParams.get("carNo") ?? "";
 
@@ -58,7 +79,7 @@ export async function GET(request: NextRequest) {
     const page = await getParkingPage();
 
     // 차량 번호 조회
-    await page.goto(process.env.PARKING_CAR_URL + `?carNo=${carNo}`!, { waitUntil: "domcontentloaded" });
+    await page.goto(process.env.PARKING_CAR_URL! + `?carNo=${carNo}`, { waitUntil: "domcontentloaded" });
 
     const baseUrl: string = process.env.PARKING_BASE_URL!;
 
@@ -92,8 +113,85 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ cars });
   } catch (error) {
     // 에러 시 다음 요청에서 재로그인할 수 있도록 페이지 초기화
-    //parkingPage?.close();
+    global._parkingPage?.close();
     global._parkingPage = null;
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
+}
+
+async function applyParkingDiscount(
+  page: Page,
+  carNo: string,
+  inDateTime: string,
+  ticketType: string
+): Promise<void> {
+  // 1. 차량 목록에서 해당 차량 클릭
+  await page.click(`#carListTable > tbody > tr[data-carno="${carNo}"]`);
+
+  // 2. 4시간권이 이미 적용됐는지 확인
+  // 로딩 기다리기
+  await page.waitForFunction(() => {
+    const td = document.querySelector("#dcticListTable > tbody > tr > td:nth-child(1)")
+    const text = td?.textContent?.trim() ?? "";
+    return text.length > 0 && !text.includes("조회중");
+  });
+  const alreadyHas4h: boolean = await page.$eval(
+    "#dcticListTable > tbody > tr > td:nth-child(1)",
+    el => el.textContent?.includes("4시간") === true
+  );
+
+  //3. 부여할 30분권의 개수 계산
+  let count: number = calculateDiscountCount(inDateTime, ticketType, alreadyHas4h);
+  console.log(`할인권(30분): ${count} (차량번호: ${carNo}, 입장권: ${ticketType})`);
+
+  // 4. 계산된 개수에 해당하는 버튼 클릭으로 할인권 부여
+  const fourHourBtn =  await page.$(`input[data-dc_time="240"] + ul .dc-item-btn-div button:nth-child(1)`);
+  const oneHourBtn =  await page.$(`input[data-dc_time="60"] + ul .dc-item-btn-div button:nth-child(1)`);
+  const thirtyMinuteBtn =  await page.$(`input[data-dc_time="30"] + ul .dc-item-btn-div button:nth-child(1)`);
+
+  // 기본으로 4시간권 부여
+  if (!alreadyHas4h) {
+    await fourHourBtn?.click();
+    count = Math.max(count - 8, 0);
+  }
+
+  // 1시간권 부여
+  for (let i = 0; i < Math.floor(count / 2); i++) {
+    await oneHourBtn?.click();
+  }
+
+  // 30분권 부여
+  for (let i = 0; i < count % 2; i++) {
+    await thirtyMinuteBtn?.click();
+  }
+
+  // 5. 적용 버튼 클릭 (최종)
+  await page.click("#dcTicApplyBtn");
+  await page.waitForSelector("div.modal-footer");
+  await page.click("div.modal-footer > button.bootbox-accept");
+  await page.waitForSelector("div.modal-footer");
+  await page.click("div.modal-footer > button.bootbox-accept");
+
+  console.log(`주차 정산 완료 (차량번호: ${carNo}, 입장권: ${ticketType})`);
+}
+
+function calculateDiscountCount(
+  inDateTime: string,
+  ticketType: string,
+  alreadyHas4h: boolean
+): number {
+  const inTime: Date = new Date(inDateTime);
+  const now: Date = new Date();
+  let diffMinutes: number = Math.floor((now.getTime() - inTime.getTime()) / 60_000);
+
+  // 4시간권이 이미 적용된 경우
+  if (alreadyHas4h) {
+    diffMinutes -= 240;
+  }
+
+  let count: number = Math.ceil((diffMinutes + 25) / 30); // 할인권(30분) 개수
+  count = count < 0 ? 0 : count;
+  count = Math.min(count, MAX_DISCOUNT_COUNT[ticketType]);
+
+  return count;
 }
