@@ -51,8 +51,8 @@ async function getParkingPage(): Promise<Page> {
   return global._parkingPage;
 }
 
-export async function POST(request: NextRequest) {
-  const { carNo } = await request.json();
+export async function GET(request: NextRequest) {
+  const carNo = request.nextUrl.searchParams.get("carNo") ?? "";
 
   try {
     const page = await getParkingPage();
