@@ -92,7 +92,7 @@ async function getLaunchOptions() {
         "--disable-features=HttpsFirstBalancedModeAutoEnable"
       ],
       executablePath: await chromium.executablePath(
-        "https://github.com/Sparticuz/chromium/releases/download/v143.0.4/chromium-v143.0.4-pack.tar"
+        "https://github.com/Sparticuz/chromium/releases/download/v143.0.4/chromium-v143.0.4-pack.x64.tar"
       ),
       headless: true as const,
     };
