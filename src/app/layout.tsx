@@ -12,7 +12,14 @@ const notoSansKr = Noto_Sans_KR({
 export const metadata: Metadata = {
   title: "고고 다이노 키즈카페 주차 정산",
   description: "고고 다이노 키즈카페 주차 정산 시스템",
-  manifest: "/manifest.json"
+  manifest: "/manifest.json",
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,  // 사용자가 임의로 확대/축소 금지
 };
 
 export default function RootLayout(
