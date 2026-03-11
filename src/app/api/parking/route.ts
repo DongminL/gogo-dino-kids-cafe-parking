@@ -63,8 +63,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ cars });
   } catch (error) {
-    global._parkingPage?.close();
-    global._parkingPage = null;
+    await closeBrowser();
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }
@@ -79,10 +78,16 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    global._parkingPage?.close();
-    global._parkingPage = null;
+    await closeBrowser();
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
+}
+
+async function closeBrowser() {
+  await global._parkingPage?.close();
+  global._parkingPage = null;
+  await global._parkingBrowser?.close();
+  global._parkingBrowser = null;
 }
 
 async function getParkingPage(): Promise<Page> {
