@@ -18,45 +18,6 @@ interface CarData {
   inDateTime: string;
 }
 
-async function getParkingPage(): Promise<Page> {
-  // 브라우저가 없거나 연결이 끊긴 경우 새로 실행
-  if (!global._parkingBrowser || !global._parkingBrowser.connected) {
-    global._parkingBrowser = await puppeteer.launch({
-      headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-features=HttpsFirstBalancedModeAutoEnable",
-      ],
-    });
-    global._parkingPage = null;
-  }
-
-  // 페이지가 없거나 닫힌 경우 새로 열고 로그인
-  if (!global._parkingPage || global._parkingPage.isClosed()) {
-    global._parkingPage = await global._parkingBrowser.newPage();
-    await global._parkingPage.goto(process.env.PARKING_CAR_URL!, { waitUntil: "domcontentloaded" });
-    await ensureLogIn(global._parkingPage);
-  }
-
-  return global._parkingPage;
-}
-
-export async function POST(request: NextRequest) {
-  const { carNo, inDateTime, ticketType } = await request.json();
-
-  try {
-    const page = await getParkingPage();
-
-    await applyParkingDiscount(page, carNo, inDateTime, ticketType);
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    global._parkingPage = null;
-    return NextResponse.json({ error: String(error) }, { status: 500 });
-  }
-}
-
 export async function GET(request: NextRequest) {
   const carNo = request.nextUrl.searchParams.get("carNo") ?? "";
 
@@ -102,11 +63,50 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ cars });
   } catch (error) {
-    // 에러 시 다음 요청에서 재로그인할 수 있도록 페이지 초기화
     global._parkingPage?.close();
     global._parkingPage = null;
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
+}
+
+export async function POST(request: NextRequest) {
+  const { carNo, inDateTime, ticketType } = await request.json();
+
+  try {
+    const page = await getParkingPage();
+
+    await applyParkingDiscount(page, carNo, inDateTime, ticketType);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    global._parkingPage?.close();
+    global._parkingPage = null;
+    return NextResponse.json({ error: String(error) }, { status: 500 });
+  }
+}
+
+async function getParkingPage(): Promise<Page> {
+  // 브라우저가 없거나 연결이 끊긴 경우 새로 실행
+  if (!global._parkingBrowser || !global._parkingBrowser.connected) {
+    global._parkingBrowser = await puppeteer.launch({
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-features=HttpsFirstBalancedModeAutoEnable",
+      ],
+    });
+    global._parkingPage = null;
+  }
+
+  // 페이지가 없거나 닫힌 경우 새로 열고 로그인
+  if (!global._parkingPage || global._parkingPage.isClosed()) {
+    global._parkingPage = await global._parkingBrowser.newPage();
+    await global._parkingPage.goto(process.env.PARKING_CAR_URL!, { waitUntil: "domcontentloaded" });
+    await ensureLogIn(global._parkingPage);
+  }
+
+  return global._parkingPage;
 }
 
 // 로그인 페이지일 때, 로그인 함 (로그인한 여부 반환)
