@@ -495,6 +495,47 @@
 }
 
 
+// 차량 조회 실패 메시지 컨테이너
+.notFoundMessage {
+  @include flex-col-center;
+  flex: 1;
+  min-height: 200px;
+  max-height: 300px;
+  background: #fff5f5;
+  border: 4px solid $primary-navy;
+  border-radius: $border-radius-lg;
+  box-shadow: 0 8px 0 $primary-red;
+  color: $primary-navy;
+  margin: 10px 0 20px 0;
+  padding: 30px;
+  text-align: center;
+
+  .notFoundIcon {
+    margin-bottom: 20px;
+    animation: floating 3s ease-in-out infinite;
+  }
+
+  p {
+    font-size: 1.8rem;
+    font-weight: 900;
+    margin: 5px 0;
+    line-height: 1.5;
+    word-break: keep-all;
+
+    strong {
+      color: $primary-red;
+      font-size: 2.2rem;
+    }
+  }
+
+  .subText {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: $text-light;
+    margin-top: 15px;
+  }
+}
+
 // Step 4: 완료 단계
 .completeText {
   text-align: center;
