@@ -174,7 +174,7 @@ async function applyParkingDiscount(
   const oneHourBtn =  await page.$(`input[data-dc_time="60"] + ul .dc-item-btn-div button:nth-child(1)`);
   const thirtyMinuteBtn =  await page.$(`input[data-dc_time="30"] + ul .dc-item-btn-div button:nth-child(1)`);
 
-  // 기본으로 4시간권 부여
+  // 첫 주차 등록 손님은 기본으로 4시간권 부여
   if (!alreadyHas4h) {
     await fourHourBtn?.click();
     count = Math.max(count - 8, 0);
@@ -192,10 +192,10 @@ async function applyParkingDiscount(
 
   // 5. 적용 버튼 클릭 (최종)
   await page.click("#dcTicApplyBtn");
-  await page.waitForSelector("div.modal-footer");
-  await page.click("div.modal-footer > button.bootbox-accept");
-  await page.waitForSelector("div.modal-footer");
-  await page.click("div.modal-footer > button.bootbox-accept");
+  await page.waitForSelector("div.bootbox-confirm.in button.bootbox-accept");
+  await page.click("div.bootbox-confirm.in button.bootbox-accept");
+  await page.waitForSelector("div.bootbox.in button.bootbox-accept");
+  await page.click("div.bootbox.in button.bootbox-accept");
 
   console.log(`주차 정산 완료 (차량번호: ${carNo}, 입장권: ${ticketType})`);
 }
