@@ -50,7 +50,9 @@ export async function GET(request: NextRequest) {
           const filePath = row.getAttribute("data-filepath") ?? "";
           const carNo = row.getAttribute("data-carno") ?? "";
           const carNoNo = row.getAttribute("data-carnono") ?? "";
-          const inDateTime = row.getAttribute("data-indtm") ?? "";
+          const inDateTime = new Date(
+            (row.getAttribute("data-indtm") ?? "").replace(" ", "T") + "+09:00"
+          ).toISOString();
 
           return {
             platePrefix: carNo.slice(0, carNo.length - carNoNo.length),
