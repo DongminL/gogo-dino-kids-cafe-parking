@@ -40,39 +40,6 @@ export default function KioskPage() {
     setIsSettling(false);
   };
 
-  const handleSettle = async (): Promise<void> => {
-    if (!selectedCar || !ticket) {
-      return;
-    }
-
-    setIsSettling(true);
-    try {
-      const carNo = selectedCar.platePrefix + selectedCar.plateNumber;
-
-      const res = await fetch("/api/parking", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          carNo,
-          inDateTime: selectedCar.inDateTime,
-          ticketType: ticket,
-        }),
-      });
-      const data = await res.json();
-
-      if (data.error) {
-        console.error("정산 오류:", data.error);
-        return;
-      }
-
-      setStep(4);
-    } catch (error) {
-      console.error("정산 API 호출 오류:", error);
-    } finally {
-      setIsSettling(false);
-    }
-  };
-
   const handleKeypad = (num: string): void => {
     if (plateNumber.length < 4) {
       setPlateNumber((prev) => prev + num);
@@ -107,6 +74,39 @@ export default function KioskPage() {
       console.error("API 호출 오류:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSettle = async (): Promise<void> => {
+    if (!selectedCar || !ticket) {
+      return;
+    }
+
+    setIsSettling(true);
+    try {
+      const carNo = selectedCar.platePrefix + selectedCar.plateNumber;
+
+      const res = await fetch("/api/parking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          carNo,
+          inDateTime: selectedCar.inDateTime,
+          ticketType: ticket,
+        }),
+      });
+      const data = await res.json();
+
+      if (data.error) {
+        console.error("정산 오류:", data.error);
+        return;
+      }
+
+      setStep(4);
+    } catch (error) {
+      console.error("정산 API 호출 오류:", error);
+    } finally {
+      setIsSettling(false);
     }
   };
 
