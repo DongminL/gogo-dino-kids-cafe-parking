@@ -3,23 +3,17 @@
 import React, { useState, useEffect } from "react";
 import styles from "../styles/kiosk.module.scss";
 import { Car, Clock, Infinity, CheckCircle2, ChevronLeft, Home, AlertCircle } from "lucide-react";
+import { CarInfo, ApplyDiscountResult } from "@/parking/dto/parking-response.dto";
+import { TicketType } from "@/parking/dto/type.dto";
 
 type Step = 0 | 1 | 2 | 3 | 4;
-type TicketType = "2hours" | "unlimited" | null;
 
-interface CarData {
-  platePrefix: string;
-  plateNumber: string;
-  imageUrl: string;
-  inDateTime: string;
-}
-
-export default function KioskPage() {
+export default function KioskPage(): React.ReactNode {
   const [step, setStep] = useState<Step>(0);
-  const [ticket, setTicket] = useState<TicketType>(null);
+  const [ticket, setTicket] = useState<TicketType | null>(null);
   const [plateNumber, setPlateNumber] = useState("");
-  const [matchingCars, setMatchingCars] = useState<CarData[]>([]);
-  const [selectedCar, setSelectedCar] = useState<CarData | null>(null);
+  const [matchingCars, setMatchingCars] = useState<CarInfo[]>([]);
+  const [selectedCar, setSelectedCar] = useState<CarInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSettling, setIsSettling] = useState(false);
   const [isNeedCounterCheck, setIsNeedCounterCheck] = useState(true);
@@ -58,17 +52,16 @@ export default function KioskPage() {
   const handleSearchCars = async (): Promise<void> => {
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/parking?carNo=${plateNumber}`);
+      const res: Response = await fetch(`/api/parking?carNo=${plateNumber}`);
 
-      const data = await res.json();
-      console.debug(data);
+      const { cars, error }: { cars: CarInfo[], error?: string } = await res.json();
 
-      if (data.error) {
-        console.error("크롤링 오류:", data.error);
+      if (error) {
+        console.error("크롤링 오류:", error);
         return;
       }
 
-      setMatchingCars(data.cars ?? []);
+      setMatchingCars(cars ?? []);
       setSelectedCar(null);
       setStep(3);
     } catch (error) {
@@ -87,7 +80,7 @@ export default function KioskPage() {
     try {
       const carNo = selectedCar.platePrefix + selectedCar.plateNumber;
 
-      const res = await fetch("/api/parking", {
+      const res: Response = await fetch("/api/parking", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -96,20 +89,40 @@ export default function KioskPage() {
           ticketType: ticket,
         }),
       });
-      const data = await res.json();
+      const { result, error }: { result: ApplyDiscountResult, error?: string } = await res.json();
 
-      if (data.error) {
-        console.error("정산 오류:", data.error);
+      if (error) {
+        console.error("정산 오류:", error);
         return;
       }
 
-      setIsNeedCounterCheck(data.success);
+      setIsNeedCounterCheck(result === ApplyDiscountResult.SUCCESS);
       setStep(4);
     } catch (error) {
       console.error("정산 API 호출 오류:", error);
     } finally {
       setIsSettling(false);
     }
+  };
+
+  const getParkingDuration = (inDateTime: string): string => {
+    const start = new Date(inDateTime);
+    const now = new Date();
+    const diffMs = now.getTime() - start.getTime();
+
+    if (diffMs < 0) {
+      return "0분";
+    }
+
+    const totalMinutes = Math.floor(diffMs / 60_000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    if (hours > 0) {
+      return `${hours}시간 ${minutes}분`;
+    }
+  
+    return `${minutes}분`;
   };
 
   return (
@@ -190,11 +203,11 @@ export default function KioskPage() {
                   <h2>이용하신 입장권 종류를 선택해 주세요</h2>
                 </header>
                 <div className={styles.ticketGrid}>
-                  <div className={styles.ticketBtn} onClick={() => { setTicket("2hours"); setStep(2); }}>
+                  <div className={styles.ticketBtn} onClick={() => { setTicket(TicketType.TWO_HOURS); setStep(2); }}>
                     <Clock className={styles.ticketIcon} color="#009fe3" size={70} />
                     <span className={styles.ticketTitle}>2시간권</span>
                   </div>
-                  <div className={styles.ticketBtn} onClick={() => { setTicket("unlimited"); setStep(2); }}>
+                  <div className={styles.ticketBtn} onClick={() => { setTicket(TicketType.UNLIMITED); setStep(2); }}>
                     <Infinity className={styles.ticketIcon} color="#ef3322" size={70} />
                     <span className={styles.ticketTitle}>종일권 (무제한)</span>
                   </div>
@@ -292,8 +305,8 @@ export default function KioskPage() {
                             <div className={styles.carListPlate}>
                               {car.platePrefix} {car.plateNumber}
                             </div>
-                            <div className={`${styles.selectedStatus} ${selectedCar === car ? styles.visible : ''}`}>
-                              선택됨
+                            <div className={styles.carListTime}>
+                              <Clock size={16} className={styles.timeIcon} /> {getParkingDuration(car.inDateTime)}
                             </div>
                           </div>
                         </div>
@@ -325,7 +338,7 @@ export default function KioskPage() {
                         onClick={handleSettle}
                         disabled={!selectedCar || isSettling}
                       >
-                        {isSettling ? "정산 중..." : `네, 정산합니다 (${ticket === "2hours" ? "2시간권" : "종일 무제한권"})`}
+                        {isSettling ? "정산 중..." : `네, 정산합니다 (${ticket === TicketType.TWO_HOURS ? "2시간권" : "종일 무제한권"})`}
                       </button>
                     </div>
                   </>

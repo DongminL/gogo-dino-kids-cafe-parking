@@ -1,13 +1,15 @@
+import { TicketType } from "@/parking/dto/type.dto";
+
 // 이용권 종류별 최대 부여 가능한 할인권 개수 (30분권 개수)
-const MAX_DISCOUNT_COUNT: Record<string, number> = {
-  "2hours": 8,     // 2시간권: 최대 8개 (4시간)
-  "unlimited": 12, // 종일권: 최대 12개 (6시간)
+const MAX_DISCOUNT_COUNT: Record<TicketType, number> = {
+  [TicketType.TWO_HOURS]: 8,     // 2시간권: 최대 8개 (4시간)
+  [TicketType.UNLIMITED]: 12, // 종일권: 최대 12개 (6시간)
 };
 
 // 30분 주차 할인권 부여 횟수 계산
 export function calculateDiscountCount(
   inDateTime: string,
-  ticketType: string,
+  ticketType: TicketType,
   alreadyHas4h: boolean
 ): number {
   const inTime: Date = new Date(inDateTime);

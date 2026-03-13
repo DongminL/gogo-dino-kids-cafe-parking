@@ -487,7 +487,7 @@
   padding: 5px 5px 20px 5px; // 하단 스크롤바를 위해 여백 확보
   margin-bottom: 5px;
   flex-shrink: 0; 
-  min-height: 120px;
+  min-height: 100px;
   width: 100%; // 레이아웃 팽창 방지
   scroll-behavior: smooth;
   scroll-snap-type: x mandatory; // 터치/드래그 시 착착 감기는 UX 느낌
@@ -525,16 +525,16 @@
   border: 4px solid #cbd5e1; // 3px에서 4px로 변경하여 선택 후와 크기 통일
   border-radius: $border-radius-md;
   box-shadow: 0 4px 0 #cbd5e1;
-  padding: 12px 15px;
+  padding: 8px 12px;
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 10px;
   cursor: pointer;
   transition: all 0.1s;
   
   // 가로 페이지 스와이프 UX 설정 (옆 요소가 보이게)
-  flex: 0 0 calc(50% - 25px); 
-  min-width: 220px; 
+  flex: 0 0 calc(45% - 20px); 
+  min-width: 180px; 
   scroll-snap-align: start; // 페이지처럼 이 요소에 맞춰 자석 정렬
 
   &:hover {
@@ -563,17 +563,17 @@
 }
 
 .carListImage {
-  width: 70px;
-  height: 70px;
+  width: 50px;
+  height: 50px;
   background-color: white;
-  border: 3px solid #cbd5e1;
+  border: 4px solid #cbd5e1;
   border-radius: $border-radius-sm;
   @include flex-center;
   flex-shrink: 0;
 
   svg {
-    width: 35px;
-    height: 35px;
+    width: 28px;
+    height: 28px;
   }
 }
 
@@ -584,10 +584,25 @@
 }
 
 .carListPlate {
-  font-size: 1.6rem; // 번호가 길 경우를 대비해 폰트 크기 살짝 줄임
+  font-size: 1.4rem; // 번호가 길 경우를 대비해 폰트 크기 살짝 줄임
   font-weight: 900;
   color: $primary-navy;
   word-break: keep-all;
+  line-height: 1.2;
+}
+
+.carListTime {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: $text-light;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.timeIcon {
+  color: $primary-blue;
 }
 
 // 차량 사진 렌더링 (장난감 스티커북 느낌으로 복원)
