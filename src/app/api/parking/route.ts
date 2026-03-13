@@ -199,17 +199,13 @@ async function applyParkingDiscount(
 
   // 종일권인데 4시간 초과로 할인해야 될 경우, 4시간 제외한 추가 할인은 카운터에서 직접 체크
   if (ticketType === "unlimited" && count > 0) {
-    // 적용 버튼 클릭
-    await page.click("#dcTicApplyBtn");
-    await page.waitForSelector("div.bootbox-confirm.in button.bootbox-accept");
-    await page.click("div.bootbox-confirm.in button.bootbox-accept");
-    await page.waitForSelector("div.bootbox.in button.bootbox-accept");
-    await page.click("div.bootbox.in button.bootbox-accept");
-
+    await clickApplyButtons(page);
+    
     console.log(
       `주차 정산 완료 (차량번호: ${carNo}, 입장권: ${ticketType}) (카운터에서 체크 필요)\n` +
       `4시간권: ${alreadyHas4h ? 0 : 1}개, 1시간권: 0개, 30분권: 0개`
     );
+
     return false;
   }
 
@@ -226,11 +222,7 @@ async function applyParkingDiscount(
   }
 
   // 5. 적용 버튼 클릭 (최종)
-  await page.click("#dcTicApplyBtn");
-  await page.waitForSelector("div.bootbox-confirm.in button.bootbox-accept");
-  await page.click("div.bootbox-confirm.in button.bootbox-accept");
-  await page.waitForSelector("div.bootbox.in button.bootbox-accept");
-  await page.click("div.bootbox.in button.bootbox-accept");
+  await clickApplyButtons(page);
 
   console.log(
     `주차 정산 완료 (차량번호: ${carNo}, 입장권: ${ticketType})\n` +
@@ -238,6 +230,14 @@ async function applyParkingDiscount(
   );
 
   return true;
+}
+
+async function clickApplyButtons(page: Page): Promise<void> {
+  await page.click("#dcTicApplyBtn");
+  await page.waitForSelector("div.bootbox-confirm.in button.bootbox-accept");
+  await page.click("div.bootbox-confirm.in button.bootbox-accept");
+  await page.waitForSelector("div.bootbox.in button.bootbox-accept");
+  await page.click("div.bootbox.in button.bootbox-accept");
 }
 
 async function closeBrowser() {
