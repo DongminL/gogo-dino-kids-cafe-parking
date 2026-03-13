@@ -105,6 +105,26 @@ export default function KioskPage(): React.ReactNode {
     }
   };
 
+  const getParkingDuration = (inDateTime: string): string => {
+    const start = new Date(inDateTime);
+    const now = new Date();
+    const diffMs = now.getTime() - start.getTime();
+
+    if (diffMs < 0) {
+      return "0분";
+    }
+
+    const totalMinutes = Math.floor(diffMs / 60_000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    if (hours > 0) {
+      return `${hours}시간 ${minutes}분`;
+    }
+  
+    return `${minutes}분`;
+  };
+
   return (
     <main className={styles.kioskContainer}>
       <section className={styles.kioskCard}>
@@ -285,8 +305,8 @@ export default function KioskPage(): React.ReactNode {
                             <div className={styles.carListPlate}>
                               {car.platePrefix} {car.plateNumber}
                             </div>
-                            <div className={`${styles.selectedStatus} ${selectedCar === car ? styles.visible : ''}`}>
-                              선택됨
+                            <div className={styles.carListTime}>
+                              <Clock size={16} className={styles.timeIcon} /> {getParkingDuration(car.inDateTime)}
                             </div>
                           </div>
                         </div>
