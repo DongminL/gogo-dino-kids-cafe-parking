@@ -22,6 +22,7 @@ export default function KioskPage() {
   const [selectedCar, setSelectedCar] = useState<CarData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSettling, setIsSettling] = useState(false);
+  const [isNeedCounterCheck, setIsNeedCounterCheck] = useState(true);
 
   // 정산 완료 시 5초 후 처음으로 돌아가기
   useEffect(() => {
@@ -102,6 +103,7 @@ export default function KioskPage() {
         return;
       }
 
+      setIsNeedCounterCheck(data.success);
       setStep(4);
     } catch (error) {
       console.error("정산 API 호출 오류:", error);
@@ -337,6 +339,13 @@ export default function KioskPage() {
                 <CheckCircle2 size={100} color="#86c043" className={styles.checkIcon} />
                 <h2>정산 완료!</h2>
                 <p>이용해주셔서 감사합니다.<br />안녕히 가세요! 🦖</p>
+
+                {!isNeedCounterCheck && (
+                  <div className={styles.counterNotice}>
+                    <AlertCircle size={32} color="#ef3322" />
+                    추가 정산은 카운터에서 요청 부탁드립니다.
+                  </div>
+                )}
 
                 <button className={`${styles.secondaryBtn} ${styles.returnBtn}`} onClick={resetKiosk}>
                   처음 화면으로 돌아가기
