@@ -318,7 +318,7 @@ export default function KioskPage(): React.ReactNode {
                         onClick={handleSettle}
                         disabled={!selectedCar || isSettling}
                       >
-                        {isSettling ? "정산 중..." : `네, 정산합니다 (${ticket === "2hours" ? "2시간권" : "종일 무제한권"})`}
+                        {isSettling ? "정산 중..." : `네, 정산합니다 (${ticket === TicketType.TWO_HOURS ? "2시간권" : "종일 무제한권"})`}
                       </button>
                     </div>
                   </>
