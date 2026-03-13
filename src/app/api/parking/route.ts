@@ -77,9 +77,10 @@ export async function POST(request: NextRequest) {
   try {
     const page = await getParkingPage();
 
-    await applyParkingDiscount(page, carNo, inDateTime, ticketType);
+    const result = await applyParkingDiscount(page, carNo, inDateTime, ticketType);
+    console.log(`주차 정산 완료 (차량번호: ${carNo}, 입장권: ${ticketType})`);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: result });
   } catch (error) {
     await closeBrowser();
     return NextResponse.json({ error: String(error) }, { status: 500 });
@@ -144,12 +145,15 @@ async function ensureLogIn(page: Page): Promise<boolean> {
   return false;
 }
 
+/** 
+ * @returns true: 정산 완료, false: 카운터에서 체크 필요
+ */
 async function applyParkingDiscount(
   page: Page,
   carNo: string,
   inDateTime: string,
   ticketType: string
-): Promise<void> {
+): Promise<boolean> {
   // 1. 차량 목록에서 해당 차량 클릭
   await page.click(`#carListTable > tbody > tr[data-carno="${carNo}"]`);
 
@@ -165,19 +169,44 @@ async function applyParkingDiscount(
     el => el.textContent?.includes("4시간") === true
   );
 
+  // 카운터에서 따로 확인하도록, 여기선 정산 중단
+  if (alreadyHas4h && ticketType === "unlimited") {
+    console.log("카운터에서 체크 필요");
+    return false;
+  }
+  
+
   //3. 부여할 30분권의 개수 계산
   let count: number = calculateDiscountCount(inDateTime, ticketType, alreadyHas4h);
   console.log(`할인권(30분): ${count} (차량번호: ${carNo}, 입장권: ${ticketType})`);
+
+  // 정산이 필요 없는 경우
+  if (count == 0) {
+    return true;
+  }
 
   // 4. 계산된 개수에 해당하는 버튼 클릭으로 할인권 부여
   const fourHourBtn =  await page.$(`input[data-dc_time="240"] + ul .dc-item-btn-div button:nth-child(1)`);
   const oneHourBtn =  await page.$(`input[data-dc_time="60"] + ul .dc-item-btn-div button:nth-child(1)`);
   const thirtyMinuteBtn =  await page.$(`input[data-dc_time="30"] + ul .dc-item-btn-div button:nth-child(1)`);
 
-  // 기본으로 4시간권 부여
+  // 첫 주차 등록 손님은 기본으로 4시간권 부여
   if (!alreadyHas4h) {
     await fourHourBtn?.click();
-    count = Math.max(count - 8, 0);
+    count -= 8;
+  }
+
+  // 종일권인데 4시간 초과로 할인해야 될 경우, 4시간 제외한 추가 할인은 카운터에서 직접 체크
+  if (ticketType === "unlimited" && count > 0) {
+    // 적용 버튼 클릭
+    await page.click("#dcTicApplyBtn");
+    await page.waitForSelector("div.bootbox-confirm.in button.bootbox-accept");
+    await page.click("div.bootbox-confirm.in button.bootbox-accept");
+    await page.waitForSelector("div.bootbox.in button.bootbox-accept");
+    await page.click("div.bootbox.in button.bootbox-accept");
+
+    console.log("카운터에서 체크 필요");
+    return false;
   }
 
   // 1시간권 부여
@@ -192,12 +221,12 @@ async function applyParkingDiscount(
 
   // 5. 적용 버튼 클릭 (최종)
   await page.click("#dcTicApplyBtn");
-  await page.waitForSelector("div.modal-footer");
-  await page.click("div.modal-footer > button.bootbox-accept");
-  await page.waitForSelector("div.modal-footer");
-  await page.click("div.modal-footer > button.bootbox-accept");
+  await page.waitForSelector("div.bootbox-confirm.in button.bootbox-accept");
+  await page.click("div.bootbox-confirm.in button.bootbox-accept");
+  await page.waitForSelector("div.bootbox.in button.bootbox-accept");
+  await page.click("div.bootbox.in button.bootbox-accept");
 
-  console.log(`주차 정산 완료 (차량번호: ${carNo}, 입장권: ${ticketType})`);
+  return true;
 }
 
 async function closeBrowser() {

@@ -708,6 +708,22 @@
   }
 }
 
+.counterNotice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding: 20px 32px;
+  background: #fff3f3;
+  border: 3px solid #ef3322;
+  border-radius: 16px;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #ef3322;
+  text-align: center;
+  animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
 // 공통 버튼 요소
 .primaryBtn {
   @include kiosk-button($primary-blue, white);
