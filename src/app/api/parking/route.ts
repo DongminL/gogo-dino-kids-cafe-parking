@@ -78,7 +78,6 @@ export async function POST(request: NextRequest) {
     const page = await getParkingPage();
 
     const result = await applyParkingDiscount(page, carNo, inDateTime, ticketType);
-    console.log(`주차 정산 완료 (차량번호: ${carNo}, 입장권: ${ticketType})`);
 
     return NextResponse.json({ success: result });
   } catch (error) {
@@ -171,14 +170,16 @@ async function applyParkingDiscount(
 
   // 카운터에서 따로 확인하도록, 여기선 정산 중단
   if (alreadyHas4h && ticketType === "unlimited") {
-    console.log("카운터에서 체크 필요");
+    console.log(
+      `주차 정산 완료 (차량번호: ${carNo}, 입장권: ${ticketType}) (카운터에서 체크 필요)\n` +
+      `4시간권: 0개, 1시간권: 0개, 30분권: 0개`
+    );
     return false;
   }
   
 
   //3. 부여할 30분권의 개수 계산
   let count: number = calculateDiscountCount(inDateTime, ticketType, alreadyHas4h);
-  console.log(`할인권(30분): ${count} (차량번호: ${carNo}, 입장권: ${ticketType})`);
 
   // 정산이 필요 없는 경우
   if (count == 0) {
@@ -205,17 +206,22 @@ async function applyParkingDiscount(
     await page.waitForSelector("div.bootbox.in button.bootbox-accept");
     await page.click("div.bootbox.in button.bootbox-accept");
 
-    console.log("카운터에서 체크 필요");
+    console.log(
+      `주차 정산 완료 (차량번호: ${carNo}, 입장권: ${ticketType}) (카운터에서 체크 필요)\n` +
+      `4시간권: ${alreadyHas4h ? 0 : 1}개, 1시간권: 0개, 30분권: 0개`
+    );
     return false;
   }
 
   // 1시간권 부여
-  for (let i = 0; i < Math.floor(count / 2); i++) {
+  const oneHourCount: number = Math.floor(count / 2);
+  for (let i = 0; i < oneHourCount; i++) {
     await oneHourBtn?.click();
   }
 
   // 30분권 부여
-  for (let i = 0; i < count % 2; i++) {
+  const thirtyMinuteCount: number = count % 2;
+  for (let i = 0; i < thirtyMinuteCount; i++) {
     await thirtyMinuteBtn?.click();
   }
 
@@ -225,6 +231,11 @@ async function applyParkingDiscount(
   await page.click("div.bootbox-confirm.in button.bootbox-accept");
   await page.waitForSelector("div.bootbox.in button.bootbox-accept");
   await page.click("div.bootbox.in button.bootbox-accept");
+
+  console.log(
+    `주차 정산 완료 (차량번호: ${carNo}, 입장권: ${ticketType})\n` +
+    `4시간권: ${alreadyHas4h ? 0 : 1}개, 1시간권: ${oneHourCount}개, 30분권: ${thirtyMinuteCount}개`
+  );
 
   return true;
 }
