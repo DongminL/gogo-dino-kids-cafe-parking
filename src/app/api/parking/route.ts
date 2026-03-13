@@ -78,6 +78,7 @@ export async function POST(request: NextRequest) {
     const page = await getParkingPage();
 
     await applyParkingDiscount(page, carNo, inDateTime, ticketType);
+    console.log(`주차 정산 완료 (차량번호: ${carNo}, 입장권: ${ticketType})`);
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -169,6 +170,11 @@ async function applyParkingDiscount(
   let count: number = calculateDiscountCount(inDateTime, ticketType, alreadyHas4h);
   console.log(`할인권(30분): ${count} (차량번호: ${carNo}, 입장권: ${ticketType})`);
 
+  // 정산이 필요 없는 경우
+  if (count == 0) {
+    return;
+  }
+
   // 4. 계산된 개수에 해당하는 버튼 클릭으로 할인권 부여
   const fourHourBtn =  await page.$(`input[data-dc_time="240"] + ul .dc-item-btn-div button:nth-child(1)`);
   const oneHourBtn =  await page.$(`input[data-dc_time="60"] + ul .dc-item-btn-div button:nth-child(1)`);
@@ -196,8 +202,6 @@ async function applyParkingDiscount(
   await page.click("div.bootbox-confirm.in button.bootbox-accept");
   await page.waitForSelector("div.bootbox.in button.bootbox-accept");
   await page.click("div.bootbox.in button.bootbox-accept");
-
-  console.log(`주차 정산 완료 (차량번호: ${carNo}, 입장권: ${ticketType})`);
 }
 
 async function closeBrowser() {
