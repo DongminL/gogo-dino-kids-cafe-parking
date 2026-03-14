@@ -1,6 +1,7 @@
 import puppeteer, { Browser, Page } from "puppeteer-core";
 import chromium from "@sparticuz/chromium-min";
-import { calculateDiscountCount } from "@/lib/parking-utils";
+import { calculateDiscountCount, DiscountResult } from "@/lib/parking-utils";
+import { logParkingSettlement } from "@/lib/logger";
 import { CarInfo, ApplyDiscountResult } from "@/parking/dto/parking-response.dto";
 import { ApplyDiscountRequest } from "@/parking/dto/parking-request.dto";
 import { TicketType } from "@/parking/dto/type.dto";
@@ -120,22 +121,40 @@ export class ParkingService {
       (td) => td.textContent?.includes("4시간") === true
     );
 
+    const discountResult: DiscountResult = calculateDiscountCount(request.inDateTime, request.ticketType, alreadyHas4h);
+    let discountCount = discountResult.count;
+
     // 카운터에서 따로 확인하도록, 여기선 정산 중단
     if (alreadyHas4h && request.ticketType === TicketType.UNLIMITED) {
-      console.log(
-        `주차 정산 완료 (차량번호: ${request.carNo}, 입장권: ${request.ticketType}) (카운터에서 체크 필요)\n` +
-        `4시간권: 0개, 1시간권: 0개, 30분권: 0개`
-      );
+      await logParkingSettlement({
+        ticketType: request.ticketType,
+        parkingMinutes: discountResult.parkingMinutes,
+        alreadyHas4h,
+        fourHourApplied: false,
+        oneHourCount: 0,
+        thirtyMinCount: 0,
+        discountGivenMinutes: 0,
+        remainingFreeMinutes: discountResult.remainingFreeMinutes, 
+        result: ApplyDiscountResult.NEED_COUNTER_CHECK,
+      });
+
       return ApplyDiscountResult.NEED_COUNTER_CHECK;
     }
 
-    let discountCount: number = calculateDiscountCount(request.inDateTime, request.ticketType, alreadyHas4h);
-
+    // 추가 할인권이 필요 없는 경우
     if (discountCount === 0) {
-      console.log(
-        `주차 정산 완료 (차량번호: ${request.carNo}, 입장권: ${request.ticketType})\n` +
-        `4시간권: 0개, 1시간권: 0개, 30분권: 0개`
-      );
+      await logParkingSettlement({
+        ticketType: request.ticketType,
+        parkingMinutes: discountResult.parkingMinutes,
+        alreadyHas4h,
+        fourHourApplied: false,
+        oneHourCount: 0,
+        thirtyMinCount: 0,
+        discountGivenMinutes: 0,
+        remainingFreeMinutes: discountResult.remainingFreeMinutes,
+        result: ApplyDiscountResult.SUCCESS,
+      });
+
       return ApplyDiscountResult.SUCCESS;
     }
 
@@ -155,10 +174,19 @@ export class ParkingService {
     // 종일권인데 4시간 초과로 할인해야 될 경우, 4시간 제외한 추가 할인은 카운터에서 직접 체크
     if (request.ticketType === TicketType.UNLIMITED && discountCount > 0) {
       await this.clickApplyButtons(page);
-      console.log(
-        `주차 정산 완료 (차량번호: ${request.carNo}, 입장권: ${request.ticketType}) (카운터에서 체크 필요)\n` +
-        `4시간권: ${alreadyHas4h ? 0 : 1}개, 1시간권: 0개, 30분권: 0개`
-      );
+
+      await logParkingSettlement({
+        ticketType: request.ticketType,
+        parkingMinutes: discountResult.parkingMinutes,
+        alreadyHas4h,
+        fourHourApplied: !alreadyHas4h,
+        oneHourCount: 0,
+        thirtyMinCount: 0,
+        discountGivenMinutes: alreadyHas4h ? 0 : 240,
+        remainingFreeMinutes: discountResult.remainingFreeMinutes,
+        result: ApplyDiscountResult.NEED_COUNTER_CHECK,
+      });
+
       return ApplyDiscountResult.NEED_COUNTER_CHECK;
     }
 
@@ -174,10 +202,19 @@ export class ParkingService {
 
     await this.clickApplyButtons(page);
 
-    console.log(
-      `주차 정산 완료 (차량번호: ${request.carNo}, 입장권: ${request.ticketType})\n` +
-      `4시간권: ${alreadyHas4h ? 0 : 1}개, 1시간권: ${oneHourCount}개, 30분권: ${thirtyMinuteCount}개`
-    );
+    const discountGivenMinutes: number = (!alreadyHas4h ? 240 : 0) + (discountCount * 30);
+
+    await logParkingSettlement({
+      ticketType: request.ticketType,
+      parkingMinutes: discountResult.parkingMinutes,
+      alreadyHas4h,
+      fourHourApplied: !alreadyHas4h,
+      oneHourCount: Math.max(0, oneHourCount),
+      thirtyMinCount: Math.max(0, thirtyMinuteCount),
+      discountGivenMinutes,
+      remainingFreeMinutes: discountResult.remainingFreeMinutes,
+      result: ApplyDiscountResult.SUCCESS,
+    });
 
     return ApplyDiscountResult.SUCCESS;
   }
