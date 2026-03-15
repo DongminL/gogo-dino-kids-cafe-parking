@@ -6,24 +6,32 @@ const MAX_DISCOUNT_COUNT: Record<TicketType, number> = {
   [TicketType.UNLIMITED]: 12, // 종일권: 최대 12개 (6시간)
 };
 
+export interface DiscountResult {
+  parkingMinutes: number;
+  count: number;
+  remainingFreeMinutes: number;
+}
+
 // 30분 주차 할인권 부여 횟수 계산
 export function calculateDiscountCount(
   inDateTime: string,
   ticketType: TicketType,
   alreadyHas4h: boolean
-): number {
+): DiscountResult {
   const inTime: Date = new Date(inDateTime);
   const now: Date = new Date();
-  let diffMinutes: number = Math.floor((now.getTime() - inTime.getTime()) / 60_000);
+  const parkingMinutes: number = Math.floor((now.getTime() - inTime.getTime()) / 60_000);
+  let parkingTime = parkingMinutes;
 
   // 4시간권이 이미 적용된 경우
   if (alreadyHas4h) {
-    diffMinutes -= 240;
+    parkingTime -= 240;
   }
 
-  let count: number = Math.ceil((diffMinutes + 25) / 30);
-  count = count < 0 ? 0 : count;
-  count = Math.min(count, MAX_DISCOUNT_COUNT[ticketType]);
+  const rawCount: number = Math.ceil((parkingTime + 25) / 30);
+  const count = Math.min(Math.max(0, rawCount), MAX_DISCOUNT_COUNT[ticketType]);
 
-  return count;
+  const remainingFreeMinutes = (count * 30) - parkingTime;
+
+  return { parkingMinutes, count, remainingFreeMinutes };
 }
