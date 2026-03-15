@@ -49,12 +49,13 @@ export async function logParkingSettlement(data: ParkingSettlementLog): Promise<
     headers.Authorization = `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`;
   }
 
-  fetch(`${lokiUrl}/loki/api/v1/push`, { 
-      method: "POST", 
-      headers, 
-      body 
-    }
-  ).catch((err) =>
-    console.error("Loki push error:", err)
-  );
+  try {
+    await fetch(`${lokiUrl}/loki/api/v1/push`, {
+      method: "POST",
+      headers,
+      body,
+    });
+  } catch (err) {
+    console.error("Loki push error:", err);
+  }
 }
